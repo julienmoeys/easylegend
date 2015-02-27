@@ -1150,8 +1150,8 @@ setColorScale.default <- function(
     nsmall   = 3,           # see format()
     ...      # passed to format
 ){  
-    sCol  <- ifelse( all( is.logical( col ) ), col[1], TRUE ) 
-    sFill <- ifelse( all( is.logical( fill ) ), fill[1], TRUE ) 
+    sCol  <- ifelse( all( is.logical( col ) ), col[1L], TRUE ) 
+    sFill <- ifelse( all( is.logical( fill ) ), fill[1L], TRUE ) 
     
     if( !any( c( sCol, sFill ) ) ){ 
         stop( "Either 'col' or 'fill' must be set (to TRUE or a vector of colors)" ) 
@@ -1210,6 +1210,7 @@ setColorScale.default <- function(
     hasNA <- any( is.na( x ) ) 
     
     
+    #   Define the breaks in x values
     if( is.null( breaks ) ){ 
         breaks <- seq( 
             from = min( x, na.rm = hasNA ), 
@@ -1227,17 +1228,27 @@ setColorScale.default <- function(
     
     #   Output list
     out <- list( 
-        "legend" = function( x, y = NULL, legend, col = NULL, 
-            fill = NULL, border = "black", groups = NULL, cex = 1, 
+        "legend" = function( 
+            # Arguments that exists in legend()
+            x, y = NULL, legend, col = NULL, 
+            fill = NULL, border = "black", cex = 1, 
             text.col = par( "col" ), text.font = NULL, 
             title.col = par( "col" ), horiz = FALSE, 
-            title = NULL, ... 
+            title = NULL, ..., 
+            
+            #   Arguments that do not exists in legend() (extra)
+            groups = NULL,  
+            style  = 1L     # style == 1L means no intermediate colors. 
+                            # style != 1L means with intermediate colors
+            
         ){  
-            if( !exists( "style" ) ){ style <- 1 }
+            # if( !exists( "style" ) ){ style <- 1L }
             
             if( horiz ){ stop( "'horiz' = TRUE not supported in easylegend" ) }
             
-            #   Prepare the arguments
+            #   Prepare a list (of arguments) that will be passed 
+            #   to the function legend using do.call()
+            
             arguments <- list( "x" = x, "y" = y, title.col = title.col, 
                 title = title ) 
             
@@ -1246,6 +1257,9 @@ setColorScale.default <- function(
                     "legend" = legend ) ) 
                 
             }else if( style != 1 ){ # !is.null( fill )
+                # style != 1 means a color ramp with intermediate colors
+                # 
+                
                 transpLeg <- legend[ order( nchar( legend ) ) ] 
                 transpLeg <- transpLeg[ -1 ]
                 
@@ -1266,7 +1280,8 @@ setColorScale.default <- function(
                 what = get( "legend", pos = "package:graphics" ), 
                 args = arguments ) 
             
-            if( style != 1 ){ # (!is.null( fill )) & (!is.null( groups ))
+            if( style != 1L ){ # (!is.null( fill )) & (!is.null( groups ))
+                # style != 1 means a color ramp with intermediate colors
                 yy <- .addColorGradientLegend( 
                     l      = lRes, 
                     fill   = fill, 
@@ -1324,8 +1339,8 @@ setColorScale.default <- function(
     nConvert <- nrow( convert ) 
     
     if( int == 1L ){ 
-        convert2                   <- convert 
-        convert2[, "groups" ]      <- 1:nConvert 
+        convert2              <- convert 
+        convert2[, "groups" ] <- 1:nConvert 
         #convert2[, "groupLabels" ] <- convert2[, "labels" ] 
         
     }else{ 
