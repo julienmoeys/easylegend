@@ -1,0 +1,10 @@
+#################
+## R package
+#################
+
+test/
+www/
+
+pkg/*.pdf
+pkg/*.zip
+pkg/*.tar.gz

@@ -1,0 +1,25 @@
+
+    package easylegend
+    
+VERSION 1.2.3
+
+    2014/10/02  Compiled for R 3.1.1
+    
+        Added SVN revision display on load
+        
+        Modified Authors@R field in DESCRIPTION
+    
+VERSION 1.2.0
+
+    2014/03/10  setColorScale() now define automatic and custom 
+        (fill)color scales and legends
+
+VERSION 1.1.0
+
+    2014/03/03  Now support matrix-data, for usage with 
+        image()
+    
+VERSION 1.0.0
+
+    2014/02/28  Package created. with setFactorGraphics(), asCol() 
+        and asPch() 
