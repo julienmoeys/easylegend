@@ -314,7 +314,14 @@ image( x = matrix2image( m ), col = cs[[ "iFill" ]],
 
 plotAnywhere( expr = cs$legend( x = "right", bty = "n" ) )
 
-rm( cs )
+#   Extra legend in reverse order
+cs2  <- setColorScale( m, fill = c("lightyellow","lightgreen","orange","darkred"), 
+    int = 4, breaks = c(-Inf,-1,0,+1,+Inf), digits = 1, nsmall = 1, 
+    decreasing = FALSE ) 
+
+plotAnywhere( expr = cs2$legend( x = "bottomright", bty = "n" ) )
+
+rm( cs, cs2 )
 
 
 
