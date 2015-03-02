@@ -1,6 +1,6 @@
 Package: easylegend
-Version: 1.2.3
-Date: 2014-10-02
+Version: 1.2.4
+Date: 2015-03-02
 Title: Simplifies plot legends for categorical data.
 Author: Julien Moeys [aut, cre]
 Authors@R: c( person( "Julien", "Moeys", "role" = c("aut", "cre"), "email" = "JulienDOTMoeys@sluDOTse" ) )

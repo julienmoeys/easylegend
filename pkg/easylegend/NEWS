@@ -1,6 +1,13 @@
 
     package easylegend
     
+VERSION 1.2.4
+    
+    2014/02/27  Moved package to GitHub + minor changes
+    
+    2014/03/02  Attempt to make the legend sortable in increasing 
+        or decreasing order.
+    
 VERSION 1.2.3
 
     2014/10/02  Compiled for R 3.1.1

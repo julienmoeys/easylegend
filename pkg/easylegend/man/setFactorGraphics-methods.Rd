@@ -9,8 +9,8 @@
 setFactorGraphics(x, ...)
 
 \method{setFactorGraphics}{default}(x, col = FALSE, pch = FALSE,
-  fill = FALSE, leg = NULL, ord = TRUE, naCol = "black", naPch = 25,
-  naFill = "black", naLeg = "na", ...)
+  fill = FALSE, leg = NULL, ord = TRUE, decreasing = FALSE,
+  naCol = "black", naPch = 25, naFill = "black", naLeg = "na", ...)
 
 \method{setFactorGraphics}{matrix}(x, ...)
 
@@ -47,6 +47,11 @@ setFactorGraphics(x, ...)
  will be the same as \code{as.character(values)}.}
 
 \item{ord}{Logical value. If \code{TRUE}, the legend is ordered (sorted).}
+
+\item{decreasing}{Logical value. If \code{TRUE} (not default), and \code{ord = TRUE}
+ the legend is ordered (sorted) in decreasing order (i.e. low
+ values on the bottom of the color scale and high values on the
+ top of the color scale).}
 
 \item{naCol}{Single character string. Color for \code{NA} (missing) values.}
 

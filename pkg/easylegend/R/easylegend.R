@@ -108,6 +108,12 @@
 #'@param ord
 #'  Logical value. If \code{TRUE}, the legend is ordered (sorted).
 #'
+#'@param decreasing
+#'  Logical value. If \code{TRUE} (not default), and \code{ord = TRUE} 
+#'  the legend is ordered (sorted) in decreasing order (i.e. low 
+#'  values on the bottom of the color scale and high values on the 
+#'  top of the color scale).
+#'
 #'@param naCol
 #'  Single character string. Color for \code{NA} (missing) values.
 #'
@@ -165,6 +171,7 @@ setFactorGraphics.default <- function(
  fill=FALSE, 
  leg=NULL, 
  ord=TRUE, 
+ decreasing=FALSE, 
  #colList=NULL, 
  #pchList=NULL, 
  #fillList=NULL, 
@@ -200,7 +207,8 @@ setFactorGraphics.default <- function(
     }   
     
     
-    #   Prepare the conversion table:
+    #   Prepare a conversion table: From x-values to colors, symbols, 
+    #   line type, etc.
     convert <- data.frame( 
         "values"    = unique(x), 
         #"col"       = NA_character_, 
@@ -212,7 +220,10 @@ setFactorGraphics.default <- function(
     
     
     if( ord ){ 
-        convert <- convert[ order( convert[, "values" ] ), , drop = FALSE ] 
+        convert <- convert[ order( convert[, "values" ], decreasing = decreasing ), , 
+            drop = FALSE ] 
+            # So if there is just one column it 
+            # does not become a vector
     }   
     
     
@@ -1098,6 +1109,11 @@ setFactorGraphics.RasterLayer <- function(
 #'  Single character string. Legend (label) for \code{NA} (missing) 
 #'  values.
 #'
+#'@param decreasing
+#'  Logical value. If \code{TRUE} (default), the legend is ordered 
+#'  (sorted) in decreasing order (i.e. low values on the bottom of 
+#'  the color scale and high values on the top of the color scale).
+#'
 #'@param \dots
 #'  Additional parameters passed to specific methods.
 #'
@@ -1148,6 +1164,7 @@ setColorScale.default <- function(
     include.lowest = TRUE,  # see cut()
     digits   = 3,           # see format()
     nsmall   = 3,           # see format()
+    decreasing = TRUE, 
     ...      # passed to format
 ){  
     sCol  <- ifelse( all( is.logical( col ) ), col[1L], TRUE ) 
@@ -1212,16 +1229,24 @@ setColorScale.default <- function(
     
     #   Define the breaks in x values
     if( is.null( breaks ) ){ 
-        breaks <- seq( 
-            from = min( x, na.rm = hasNA ), 
-            to   = max( x, na.rm = hasNA ), 
-            length.out = n + 1 )
+        if( decreasing ){ 
+            breaks <- seq( 
+                from = max( x, na.rm = hasNA ), 
+                to   = min( x, na.rm = hasNA ), 
+                length.out = n + 1 ) 
+        }else{ 
+            breaks <- seq( 
+                from = min( x, na.rm = hasNA ), 
+                to   = max( x, na.rm = hasNA ), 
+                length.out = n + 1 ) 
+        }   
     }else{ 
-        test <- any( sort( breaks, na.last = TRUE ) != breaks ) | 
+        test <- sort( breaks, na.last = TRUE, decreasing = decreasing )
+        test <- any( test != breaks ) | 
                 (length( unique( breaks ) ) != length( breaks )) 
         
         if( test ){ 
-            stop( "'breaks' should be ordered, with no replica" ) 
+            stop( "'breaks' should be ordered (NA last), with no replica, and consistent with argument 'decreasing'" ) 
         };  rm( test )
     }   
     

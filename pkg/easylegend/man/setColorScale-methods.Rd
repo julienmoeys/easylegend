@@ -11,7 +11,7 @@ setColorScale(x, ...)
 \method{setColorScale}{default}(x, col = FALSE, fill = FALSE,
   breaks = NULL, int = 1L, naCol = "lightgray", naLeg = "na",
   brackets = c("", " ", ""), labels = NULL, right = FALSE,
-  include.lowest = TRUE, digits = 3, nsmall = 3, ...)
+  include.lowest = TRUE, digits = 3, nsmall = 3, decreasing = TRUE, ...)
 
 \method{setColorScale}{matrix}(x, ...)
 
@@ -55,6 +55,10 @@ setColorScale(x, ...)
 \item{digits}{See \code{\link[base]{format}}.}
 
 \item{nsmall}{See \code{\link[base]{format}}.}
+
+\item{decreasing}{Logical value. If \code{TRUE} (default), the legend is ordered
+ (sorted) in decreasing order (i.e. low values on the bottom of
+ the color scale and high values on the top of the color scale).}
 
 \item{\dots}{Additional parameters passed to specific methods.}
 }

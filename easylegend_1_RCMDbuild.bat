@@ -2,7 +2,7 @@ set pkgname=easylegend
 
 cd /D "%rPackagesDir%\%pkgname%\pkg" 
 
-svnversion > %pkgname%\inst\SVN_VERSION
+git log -n 1 --oneline --no-notes > %pkgname%\inst\GIT_VERSION
 
 R CMD build --compact-vignettes="gs+qpdf" %pkgname% 
 
