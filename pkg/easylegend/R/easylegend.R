@@ -961,6 +961,7 @@ setFactorGraphics.RasterLayer <- function(
     # dx <- max( abs( diff(l$text$x) ) )
     dy <- max( abs( diff(l$text$y) ) ) 
     
+    #   Find the width of the filled boxes
     fillWidth <- min(l$text$x) - l$rect$left 
     
     yy <- rep( NA_real_, n+1 )
@@ -1554,8 +1555,14 @@ setColorScale.default <- function(
         attr( convert2, "legend" ) <- c( convert[, "from" ], 
             convert[ nConvert, "to" ] ) 
         
+        isInfLeg <- is.infinite( attr( convert2, "legend" ) ) 
+        
         attr( convert2, "legend" ) <- format( attr( convert2, "legend" ), 
             digits = digits, nsmall = nsmall, ... ) 
+        
+        attr( convert2, "legend" )[ isInfLeg ] <- ""
+        
+        rm( isInfLeg )
         
         # convert2[, "groupLabels" ] <- paste0( brackets[1], 
                 # format( min( convert2[, "from" ] ), digits = digits, nsmall = nsmall, ... ), brackets[2], 
