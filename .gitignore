@@ -3,7 +3,6 @@
 #################
 
 test/
-www/
 
 pkg/*.pdf
 pkg/*.zip
