@@ -1,7 +1,4 @@
 
-setwd( "D:/Users/julienm/Documents/_WORKS/_PROJECTS/r_packages/easylegend/www" )
-
-
 # GENERATE DUMMY DATASET X-Y-Z OF CORRELATED VARIABLES + GROUPS
 # =============================================================
 
@@ -24,31 +21,22 @@ xyz <- data.frame( "x" = x, "y" = y, "z" = z, "g" = g,
     stringsAsFactors = FALSE )
 rm( x, y, z, g )
 
-#   Missing group values
+
+
+# CATEGORY OVERLAY ON A X-Y PLOT (POINTS) AND REGRESSION LINE
+# ===========================================================
+#   with MISSING GROUP-VALUES
+
+library( "easylegend" ) 
+
 xyz[ sample(x=1:n,size=round(n/5)), "g" ] <- NA
 
-#   Inspect the data.frame
-head( xyz )
-
-
-
-# X-Y PLOT , CUSTOMISED
-# =====================
-
-library( "easylegend" )
-
-#   'Calibrate' the legend (1)
-fg <- setFactorGraphics( x = xyz[, "g" ], pch = 15:16 )
-
-fill <- hsv( h = 0.21, s = .8, v = seq( .8, .2, length.out = 5 ) )
-
-#   'Calibrate' the legend (2)
-cs  <- setColorScale( x = xyz[, "z" ], fill = fill, int = 4, 
-    nsmall = 1, digits = 1 ) 
+#   'Calibrate' the legend
+fg <- setFactorGraphics( x = xyz[, "g" ], col = TRUE, pch = TRUE )
 
 #   Generate the image-plot
 png( 
-    filename = "img/example01.png", 
+    filename = "img/example02.png", 
     width    = 500, 
     height   = 500, 
     res      = 75 ) 
@@ -60,19 +48,20 @@ png(
     plot( 
         x    = xyz[, "x" ], 
         y    = xyz[, "y" ], 
-        col  = cs$fill( xyz[, "z" ] ), 
+        col  = fg$col( xyz[, "g" ] ), 
         pch  = fg$pch( xyz[, "g" ] ), 
         xlab = "X", 
         ylab = "Y", 
-        main = "Categorical and continuous aesthetics & legends", 
+        main = "Categorical aesthetics & legends", 
         panel.first = grid() )
     
-    #   Add legend
-    fg$legend( x = "bottomright", title = "Group:", bty = "n" )
-    cs$legend( x = "topleft", title = "Z:", bty = "n" ) # , style = 1
+    #   Add regression lines
+    abline( lm( y ~ x, data = subset( xyz, g == "a" )   ), col = fg$col( "a" ) ) 
+    abline( lm( y ~ x, data = subset( xyz, g == "b" )   ), col = fg$col( "b" ) ) 
+    abline( lm( y ~ x, data = subset( xyz, is.na( g ) ) ), col = fg$col( NA ) ) 
     
+    fg$legend( x = "bottomright", title = "Group:", bty = "n", lwd = 1 )
+ 
 dev.off() 
 
-rm( fg, cs, fill ) 
-
-
+rm( fg )
