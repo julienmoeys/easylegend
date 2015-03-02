@@ -37,9 +37,13 @@ plots, but also with `image()` or `raster::plot()`.
 Example
 -------
 
+# Example 01
+
 Here is a simple example of what can be obtained with `easylegend`:
 
 ![Image 01, Example, package easylegend](www/img/example01.png "Image 01, Example, package easylegend")
+
+The source code for generating this example can be found [here](blob/master/www/example01.R)
 
 
 
