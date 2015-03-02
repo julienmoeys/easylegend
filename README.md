@@ -39,19 +39,19 @@ Example
 
 Here are a simple examples of what can be obtained with `easylegend`:
 
-# Example 01
+### Example 01
 
 ![Image 01, Example, package easylegend](www/img/example01.png "Image 01, Example, package easylegend")
 
 The source code for generating this example can be found [here](www/example01.R)
 
-# Example 02
+### Example 02
 
 ![Image 02, Example, package easylegend](www/img/example02.png "Image 02, Example, package easylegend")
 
 The source code for generating this example can be found [here](www/example02.R)
 
-# Example 03
+### Example 03
 
 This example show how `easylegend` can be used with the package 
 [raster](http://cran.r-project.org/web/packages/raster/index.html) 
