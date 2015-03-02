@@ -34,8 +34,8 @@ lower bounds not clearly defined). They can be used with standard
 plots, but also with `image()` or `raster::plot()`.
 
 
-Example
--------
+Examples
+--------
 
 Here are a simple examples of what can be obtained with `easylegend`:
 
@@ -61,9 +61,14 @@ to generate custom legends for data that span across a log-scale.
 
 The source code for generating this example can be found [here](www/example03.R)
 
+Please notice that the package [rasterVis][] provides advanced 
+way to customise a raster-plot (but as far as I know not for custom 
+non-linear legends like the one above)
 
 
-<!--- List of links used in the page -->
-[helpPage]:     easylegend/00Index.html "easylegend help page"
-[R]:            http://www.r-project.org/ "The R Project for Statistical Computing"
-[RPackages]:    http://en.wikipedia.org/wiki/R_%28programming_language%29#Packages "R packages (Wikipedia)" 
+
+<!--- Links         -->
+[R]:                http://www.r-project.org/ "The R Project for Statistical Computing"
+[RPackages]:        http://en.wikipedia.org/wiki/R_%28programming_language%29#Packages "R packages (Wikipedia)" 
+[rasterVis]:        http://cran.r-project.org/web/packages/rasterVis/index.html "package rasterVis (CRAN)"
+[raster]:           http://cran.r-project.org/web/packages/raster/index.html "package raster (CRAN)" 
