@@ -574,6 +574,7 @@ setFactorGraphics.default <- function(
         
         if( is.character( convert[, "values" ] ) ){ 
             out[[ "iBreaks" ]] <- numeric(0) 
+            
         }else{ 
             if( is.factor( convert[, "values" ] ) ){ 
                 out[[ "iBreaks" ]] <- as.numeric( convert[ !isNA, "values" ] ) 
@@ -586,18 +587,21 @@ setFactorGraphics.default <- function(
             
             if( l == 1 ){ 
                 out[[ "iBreaks" ]] <- out[[ "iBreaks" ]] + c( -1, 1 ) 
+                
             }else if( l == 2 ){ 
                 out[[ "iBreaks" ]] <- c( 
-                    out[[ "iBreaks" ]][ 1 ] - db2, 
-                    out[[ "iBreaks" ]][ 1 ] + db2, 
-                    out[[ "iBreaks" ]][ 2 ] + db2
+                    out[[ "iBreaks" ]][ 1L ] - db2, 
+                    out[[ "iBreaks" ]][ 1L ] + db2, 
+                    out[[ "iBreaks" ]][ 2L ] + db2
                 )   
+                
             }else{ 
                 out[[ "iBreaks" ]] <- c( 
-                    out[[ "iBreaks" ]][ 1 ] - db2[1], 
-                    out[[ "iBreaks" ]][ 1:(l-1) ] + db2, 
+                    out[[ "iBreaks" ]][ 1L ] - db2[ 1L ], 
+                    out[[ "iBreaks" ]][ 1L:(l-1L) ] + db2, 
                     out[[ "iBreaks" ]][ l ] + db2[ length( db2 ) ]
                 )   
+                
             }   
         }   
     }   
@@ -1114,6 +1118,12 @@ setFactorGraphics.RasterLayer <- function(
 #'  (sorted) in decreasing order (i.e. low values on the bottom of 
 #'  the color scale and high values on the top of the color scale).
 #'
+#'
+#'@param y.intersp 
+#'  Single numerical value. Character interspacing factor for 
+#'  vertical (y) spacing of the color legend. Passed to 
+#'  \code{\link[graphics]{legend}}.
+#'
 #'@param \dots
 #'  Additional parameters passed to specific methods.
 #'
@@ -1165,6 +1175,7 @@ setColorScale.default <- function(
     digits   = 3,           # see format()
     nsmall   = 3,           # see format()
     decreasing = TRUE, 
+    y.intersp = 1.5, 
     ...      # passed to format
 ){  
     sCol  <- ifelse( all( is.logical( col ) ), col[1L], TRUE ) 
@@ -1259,7 +1270,7 @@ setColorScale.default <- function(
             fill = NULL, border = "black", cex = 1, 
             text.col = par( "col" ), text.font = NULL, 
             title.col = par( "col" ), horiz = FALSE, 
-            title = NULL, ..., 
+            title = NULL, y.intersp = y.intersp, ..., 
             
             #   Arguments that do not exists in legend() (extra)
             groups = NULL,  
@@ -1275,7 +1286,7 @@ setColorScale.default <- function(
             #   to the function legend using do.call()
             
             arguments <- list( "x" = x, "y" = y, title.col = title.col, 
-                title = title ) 
+                title = title, y.intersp = y.intersp ) 
             
             if( !is.null(col) ){ 
                 arguments <- c( arguments, list( "col" = col, 
@@ -1332,12 +1343,43 @@ setColorScale.default <- function(
     class( out ) <- "numericGraphics"
     
     
+    # breaks <- c(Inf, 1, 0, -1, -Inf); decreasing <- TRUE  
+    # breaks <- c(-Inf, -1, 0, 1, Inf); decreasing <- FALSE  
+    
+    
     #   convert between class breaks and colors
-    mid  <- breaks[ 1:(length(breaks)-1) ] + diff( breaks )/2 
+    mid  <- breaks[ 1:(length(breaks)-1) ] + (diff( breaks )/2) # ifelse( decreasing, +1, -1 )
     from <- breaks[ 1:(length(breaks)-1) ]
     to   <- breaks[ 2:length(breaks) ] 
-    mid[ is.infinite( mid ) ] <- to[ is.infinite( mid ) ] 
-    mid[ is.infinite( mid ) ] <- from[ is.infinite( mid ) ] 
+    
+    
+    
+    #   Set the midpoint values for cases with infinite from or to
+    
+    .sanitiseMid <- function( mid, from, to ){ 
+        dff <- diff( c( from, to[ length( to ) ] ) )/2
+        
+        testInf <- from == +Inf
+        mid[ testInf ] <- to[ which( testInf ) ] - dff[ which( testInf ) + 1L ]
+        #   By definition from == +Inf is when decreasing is TRUE
+        
+        testInf <- from == -Inf
+        mid[ testInf ] <- to[ which( testInf ) ] - dff[ which( testInf ) + 1L ]
+        #   By definition from == -Inf is when decreasing is FALSE
+        
+        testInf <- to == -Inf
+        mid[ testInf ] <- from[ which( testInf ) ] + dff[ which( testInf ) - 1L ]
+        #   By definition to == -Inf is when decreasing is TRUE
+        
+        testInf <- to == +Inf
+        mid[ testInf ] <- from[ which( testInf ) ] + dff[ which( testInf ) - 1L ]
+        #   By definition to == +Inf is when decreasing is FALSE
+        
+        return( mid )
+    }   
+    
+    mid <- .sanitiseMid( "mid" = mid, "from" = from, "to" = to ) 
+    
     
     convert <- data.frame( 
         "from"   = from, 
@@ -1351,10 +1393,58 @@ setColorScale.default <- function(
     
     
     #   Prepare the color-class labels
+    .makeLabels <- function( 
+        from, 
+        to, 
+        brackets = brackets, 
+        digits   = digits, 
+        nsmall   = nsmall, 
+        ... 
+    ){  
+        labs <- paste0( 
+            brackets[1], 
+            format( from, digits = digits, nsmall = nsmall, ... ), 
+            brackets[2], 
+            format( to,   digits = digits, nsmall = nsmall, ... ), 
+            brackets[3] ) 
+        
+        if( any( testInf <- from == +Inf ) ){ 
+            labs[ testInf ] <- sprintf( 
+                "> %s", 
+                format( to[ testInf ], digits = digits, nsmall = nsmall, ... ) )       
+        }   
+        
+        if( any( testInf <- from == -Inf ) ){ 
+            labs[ testInf ] <- sprintf( 
+                "< %s", 
+                format( to[ testInf ], digits = digits, nsmall = nsmall, ... ) )    
+        }   
+        
+        if( any( testInf <- to == +Inf ) ){ 
+            labs[ testInf ] <- sprintf( 
+                "> %s", 
+                format( from[ testInf ], digits = digits, nsmall = nsmall, ... ) )    
+        }   
+        
+        if( any( testInf <- to == -Inf ) ){ 
+            labs[ testInf ] <- sprintf( 
+                "< %s", 
+                format( from[ testInf ], digits = digits, nsmall = nsmall, ... ) )    
+        }   
+        
+        return( labs )
+    }   
+    
     if( is.null( labels ) ){ 
-        convert[, "labels" ] <- paste0( brackets[1], 
-            format( convert[, "from" ], digits = digits, nsmall = nsmall, ... ), brackets[2], 
-            format( convert[, "to" ], digits = digits, nsmall = nsmall, ... ), brackets[3] ) 
+        convert[, "labels" ] <- .makeLabels( 
+            from     = convert[, "from" ], 
+            to       = convert[, "to" ], 
+            brackets = brackets, 
+            digits   = digits, 
+            nsmall   = nsmall, 
+            ... 
+        )   
+        
     }else{ 
         convert[, "labels" ] <- labels 
         rm( labels )
@@ -1403,40 +1493,46 @@ setColorScale.default <- function(
         convert2[, "col" ]  <- cr( nConvert * int ) 
         
         
+        # browser()
+        
         convert2 <- do.call( what = "rbind", args = lapply( 
             X   = split( x = convert2, f = convert2[, "groups" ] ), 
             FUN = function(X){ 
-                i <- X[ 1, "groups" ] 
+                # tmp <- split( x = convert2, f = convert2[, "groups" ] ); X <- tmp[[1L]]
+                
+                i <- X[ 1L, "groups" ] 
                 n <- nrow( X )
                 
-                fromTo2 <- fromTo <- unlist( convert[ i, c( "from", "to" ) ] ) 
+                fromTo2 <- fromTo <- sort( 
+                    unlist( convert[ i, c( "from", "to" ) ] ), 
+                    decreasing = decreasing ) 
                 
                 #   Neutralise infinite values
                 isInf <- is.infinite( fromTo ) 
                 
-                if( isInf[ 1 ] ){ 
-                    fromTo[ 1 ] <- fromTo[ 2 ] - 1
-                    
-                }
+                if( isInf[ "from" ] ){ fromTo[ "from" ] <- fromTo[ "to" ] + ifelse( decreasing, +1, -1 ) } 
+                if( isInf[ "to" ] ){ fromTo[ "to" ] <- fromTo[ "from" ] + ifelse( decreasing, -1, +1 ) }   
                 
-                if( isInf[ 2 ] ){ 
-                    fromTo[ 2 ] <- fromTo[ 1 ] + 1
-                    
-                }   
-                
-                #   Set values sequence
                 X[, "from" ] <- seq( 
-                    from       = fromTo[1], 
-                    to         = fromTo[2], 
-                    length.out = n+1 )[ -(n+1) ]   
+                    from       = fromTo[ ifelse( decreasing, 1L, 2L ) ], 
+                    to         = fromTo[ ifelse( decreasing, 2L, 1L ) ], 
+                    length.out = n+1L )[ -(n+1L) ] # -(n+1L)
                 
-                X[, "to" ] <- c( X[ -1, "from" ], fromTo[2] ) 
+                X[, "to" ] <- c( 
+                    X[ -1L, "from" ], 
+                    fromTo[ ifelse( decreasing, 2L, 1L ) ] ) 
                 
-                #   Re-attribute infinte values
-                if( isInf[ 1 ] ){ X[ 1, "from" ] <- fromTo2[ 1 ] } 
-                if( isInf[ 2 ] ){ X[ n, "to"   ] <- fromTo2[ 2 ] } 
+                
+                #   Re-attribute infinite values
+                if( isInf[ "from" ] ){ X[ 1L, "from" ] <- fromTo2[ "from" ] } 
+                if( isInf[ "to"   ] ){ X[ n,  "to"   ] <- fromTo2[ "to"   ] } 
                 
                 X[, "mid" ] <- rowMeans( x = X[, c( "from", "to" ) ] ) 
+                
+                X[, "mid" ] <- .sanitiseMid( # Function defined above
+                    "mid"  = X[, "mid" ], 
+                    "from" = X[, "from" ], 
+                    "to"   = X[, "to" ] ) 
                 
                 return( X ) 
             }   
@@ -1444,9 +1540,15 @@ setColorScale.default <- function(
         
         convert2 <- unique( convert2 ) 
         
-        convert2[, "labels" ] <- paste0( brackets[1], 
-                format( convert2[, "from" ] ), brackets[2], 
-                format( convert2[, "to" ] ), brackets[3] ) 
+        #   Add a pretty label (although in principle not necessary)
+        convert2[, "labels" ] <- .makeLabels( 
+            from     = convert2[, "from" ], 
+            to       = convert2[, "to" ], 
+            brackets = brackets, 
+            digits   = digits, 
+            nsmall   = nsmall, 
+            ... 
+        )   
         
         #   Make a new legend for each break point
         attr( convert2, "legend" ) <- c( convert[, "from" ], 
@@ -1478,10 +1580,16 @@ setColorScale.default <- function(
     
     
     if( sCol | sFill ){ 
-        out[[ "iCol" ]] <- out[[ "iFill" ]] <- convert2[, "col" ]  #  !isNA
+        if( decreasing ){ 
+            out[[ "iCol" ]] <- out[[ "iFill" ]] <- rev( convert2[, "col" ] ) #  !isNA
+        }else{ 
+            out[[ "iCol" ]] <- out[[ "iFill" ]] <- convert2[, "col" ] #  !isNA
+        }   
         
-        out[[ "iBreaks" ]] <- sort( unique( c( convert2[, "from" ], 
-            convert2[ nrow( convert2 ), "to" ] ) ), na.last = TRUE ) # !isNA
+        out[[ "iBreaks" ]] <- sort( 
+            unique( c( convert2[, "from" ], convert2[ nrow( convert2 ), "to" ] ) ), 
+            na.last = TRUE, 
+            decreasing = FALSE ) # This is not a mistake
         
         mi_x <- c( x, out[[ "iBreaks" ]] )
         ma_x <- max( mi_x[ is.finite( mi_x ) ], na.rm = TRUE )
@@ -1611,8 +1719,8 @@ setColorScale.default <- function(
             formals( out[[ "legend" ]] )[[ "legend" ]] <- convert[, "labels" ] 
         }   
     }   
-
     
+    formals( out[[ "legend" ]] )[[ "y.intersp" ]] <- y.intersp 
     
     return( out ) 
 }   
@@ -1642,6 +1750,13 @@ setColorScale.matrix <- function(
     )   
     
     
+    #   Find argument "decreasing"
+    decreasing <- list(...)[[ "decreasing" ]]
+    if( is.null( decreasing ) ){
+        decreasing <- formals( setColorScale.default )[[ "decreasing" ]]
+    }   
+    
+    
     #   New color function
     if( "col" %in% names(cs) ){ 
         colOriginal <- cs[[ "col" ]] 
@@ -1649,8 +1764,8 @@ setColorScale.matrix <- function(
         cs[[ "col" ]] <- function(x){ 
             return( matrix( 
                 data  = colOriginal( as.vector( x ) ), 
-                nrow  = dx[1], 
-                ncol  = dx[2], 
+                nrow  = dx[1L], 
+                ncol  = dx[2L], 
                 byrow = FALSE 
             ) ) 
         }   
@@ -1661,7 +1776,7 @@ setColorScale.matrix <- function(
         assign( pos = environment( cs[[ "col" ]] ), x = "dx",          value = dx ) 
         
         convert <- as.list( environment( colOriginal ) )[[ "convert" ]]
-        convert <- convert[ order( convert[, "from" ] ), ] 
+        convert <- convert[ order( convert[, "from" ], decreasing = decreasing ), ] 
         
         isNotNA <- (!is.na( convert[, "from" ] )) & 
             (!is.na( convert[, "to" ] ))
@@ -1678,8 +1793,8 @@ setColorScale.matrix <- function(
         cs[[ "fill" ]] <- function(x){ 
             return( matrix( 
                 data  = fillOriginal( as.vector( x ) ), 
-                nrow  = dx[1], 
-                ncol  = dx[2], 
+                nrow  = dx[1L], 
+                ncol  = dx[2L], 
                 byrow = FALSE 
             ) ) 
         }   
@@ -1690,7 +1805,7 @@ setColorScale.matrix <- function(
         assign( pos = environment( cs[[ "fill" ]] ), x = "dx",           value = dx ) 
         
         convert <- as.list( environment( fillOriginal ) )[[ "convert" ]]
-        convert <- convert[ order( convert[, "from" ] ), ] 
+        convert <- convert[ order( convert[, "from" ], decreasing = decreasing ), ] 
         
         isNotNA <- (!is.na( convert[, "from" ] )) & 
             (!is.na( convert[, "to" ] ))

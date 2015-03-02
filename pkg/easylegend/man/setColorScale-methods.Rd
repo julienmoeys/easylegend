@@ -11,7 +11,8 @@ setColorScale(x, ...)
 \method{setColorScale}{default}(x, col = FALSE, fill = FALSE,
   breaks = NULL, int = 1L, naCol = "lightgray", naLeg = "na",
   brackets = c("", " ", ""), labels = NULL, right = FALSE,
-  include.lowest = TRUE, digits = 3, nsmall = 3, decreasing = TRUE, ...)
+  include.lowest = TRUE, digits = 3, nsmall = 3, decreasing = TRUE,
+  y.intersp = 1.5, ...)
 
 \method{setColorScale}{matrix}(x, ...)
 
@@ -59,6 +60,10 @@ setColorScale(x, ...)
 \item{decreasing}{Logical value. If \code{TRUE} (default), the legend is ordered
  (sorted) in decreasing order (i.e. low values on the bottom of
  the color scale and high values on the top of the color scale).}
+
+\item{y.intersp}{Single numerical value. Character interspacing factor for
+ vertical (y) spacing of the color legend. Passed to
+ \code{\link[graphics]{legend}}.}
 
 \item{\dots}{Additional parameters passed to specific methods.}
 }
@@ -205,12 +210,12 @@ rm( cs )
 # MATRIX WITH LARGE RANGE OF VALUES
 # =================================
 
-breaks <- c(0,1,10,100)
+breaks <- c(100,10,1,0)
 m <- matrix( 
     data = c( 
-        runif( 300, breaks[1], breaks[2] ), 
-        runif( 300, breaks[2], breaks[3] ), 
-        runif( 300, breaks[3], breaks[4] ) ), 
+        runif( 300, breaks[2], breaks[1] ), 
+        runif( 300, breaks[3], breaks[2] ), 
+        runif( 300, breaks[4], breaks[3] ) ), 
     30, 30, byrow = TRUE ) 
 
 #   Add missing values
@@ -260,8 +265,8 @@ rm( cs )
 #   'Calibrate' the legend
 fill <- hsv( h = 0.21, s = .8, v = seq( .8, .2, length.out = 5 ) ) 
 
-breaks <- quantile( xyz[, "z" ], na.rm = TRUE, probs = seq( 0, 1, .2 ) )
-breaks[ c(1,length(breaks)) ] <- c( -Inf, +Inf )
+breaks <- quantile( xyz[, "z" ], na.rm = TRUE, probs = seq( 1, 0, -.2 ) )
+breaks[ c(1,length(breaks)) ] <- c( +Inf, -Inf )
 
 cs <- setColorScale( x = xyz[, "z" ], fill = fill, int = 4, 
     breaks = breaks ) 
@@ -282,8 +287,8 @@ rm( cs, fill, breaks )
 
 m <- matrix( data = rnorm(8*10), 8, 10 ) 
 
-cs  <- setColorScale( m, fill = c("lightyellow","darkred"), 
-    int = 4, breaks = c(-Inf,0,+Inf), digits = 1, nsmall = 1 ) 
+cs  <- setColorScale( m, fill = c("darkred","lightyellow"), 
+    int = 4, breaks = c(+Inf,0,-Inf), digits = 1, nsmall = 1 ) 
 
 par( "mar" = c(5, 4, 4, 5) + .1 ) 
 
@@ -299,8 +304,8 @@ rm( cs )
 # MATRIX, CUSTOMISED (3 CATEGORIES)
 # ---------------------------------
 
-cs  <- setColorScale( m, fill = c("lightyellow","orange","darkred"), 
-    int = 4, breaks = c(-Inf,-1,1,+Inf), digits = 1, nsmall = 1 ) 
+cs  <- setColorScale( m, fill = c("darkred","orange","lightgreen","lightyellow"), 
+    int = 4, breaks = c(+Inf,1,0,-1,-Inf), digits = 1, nsmall = 1 ) 
 
 par( "mar" = c(5.1, 4.1, 4.1, 6.1) ) 
 
