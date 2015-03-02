@@ -143,7 +143,7 @@
 #'  function.
 #'
 #'
-#'@example inst/examples/setFactorGraphics.R
+#'@example inst/examples/setFactorGraphics-examples.R
 #'
 #'@rdname setFactorGraphics-methods
 #'
@@ -796,7 +796,7 @@ setFactorGraphics.matrix <- function(
 #'  \code{fg} set to output of \code{\link[easylegend]{setFactorGraphics}}.
 #'
 #'
-#'@example inst/examples/asCol.R
+#'@example inst/examples/asCol-examples.R
 #'
 #'@export 
 #'
@@ -843,7 +843,7 @@ asCol <- function(
 #'  Returns a list of symbols.
 #'
 #'
-#'@example inst/examples/asPch.R
+#'@example inst/examples/asPch-examples.R
 #'
 #'@export 
 #'
@@ -1138,7 +1138,7 @@ setFactorGraphics.RasterLayer <- function(
 #'  function.
 #'
 #'
-#'@example inst/examples/setColorScale.R
+#'@example inst/examples/setColorScale-examples.R
 #'
 #'@importFrom grDevices colorRampPalette
 #'
