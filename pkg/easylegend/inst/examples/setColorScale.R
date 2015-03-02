@@ -128,7 +128,7 @@ rm( cs )
 # MATRIX WITH LARGE RANGE OF VALUES
 # =================================
 
-breaks <- c(0,1,10,100)
+breaks <- c(100,10,1,0)
 m <- matrix( 
     data = c( 
         runif( 300, breaks[1], breaks[2] ), 
