@@ -7,3 +7,5 @@ test/
 pkg/*.pdf
 pkg/*.zip
 pkg/*.tar.gz
+pkg/binaryArchives/
+pkg/easylegend.Rcheck
