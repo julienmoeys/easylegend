@@ -15,7 +15,7 @@ source( file.path( pkgDir, "..","packageUtilities.R" ) )
 pkgDescription( 
     pkgName     = pkgName, 
     pkgDir      = pkgDir, 
-    pkgVersion  = "1.2.5", 
+    pkgVersion  = "1.2.6", 
     pkgDepends  = NULL, 
     pkgImports  = "grDevices", 
     pkgSuggests = NULL, 

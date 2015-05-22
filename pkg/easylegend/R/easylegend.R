@@ -935,7 +935,7 @@ setFactorGraphics.RasterLayer <- function(
 
 .addColorGradientLegend <- function( 
  l,      # output from legend, called a 1st time 
- fill,   # fill colors
+ fill,   # fill colours
  groups, # fill groups
  #legend, # labels for each break-point 
  border = "black" 
@@ -1117,7 +1117,7 @@ setFactorGraphics.RasterLayer <- function(
 #'@param decreasing
 #'  Logical value. If \code{TRUE} (default), the legend is ordered 
 #'  (sorted) in decreasing order (i.e. low values on the bottom of 
-#'  the color scale and high values on the top of the color scale).
+#'  the colour scale and high values on the top of the colour scale).
 #'
 #'
 #'@param y.intersp 
@@ -1179,7 +1179,10 @@ setColorScale.default <- function(
     y.intersp = 1.5, 
     ...      # passed to format
 ){  
+    # sCol is TRUE if colour-legend should be calculated, FALSE otherwise
     sCol  <- ifelse( all( is.logical( col ) ), col[1L], TRUE ) 
+    
+    # sFill is TRUE if fill-legend should be calculated, FALSE otherwise
     sFill <- ifelse( all( is.logical( fill ) ), fill[1L], TRUE ) 
     
     if( !any( c( sCol, sFill ) ) ){ 
@@ -1190,6 +1193,9 @@ setColorScale.default <- function(
         
     }
     
+    #   Case: a colour-legend should be generated
+    #       and no colour are specified. 
+    #       Generating a 5-colour range
     if( sCol & all( is.logical( col ) ) ){ 
         # col  <- gray( c( .75, .50, .25, 0 ) ) 
         col  <- hsv( 
@@ -1199,6 +1205,9 @@ setColorScale.default <- function(
             #        light dark
     }
     
+    #   Case: a fill-legend should be generated
+    #       and no colour are specified
+    #       Generating a 5-colour range
     if( sFill & all( is.logical( fill ) ) ){ 
         # fill <- gray( c( .75, .50, .25, 0 ) ) 
         fill <- hsv( 
@@ -1223,19 +1232,21 @@ setColorScale.default <- function(
     }   
     
     
-    #   Check sCol and sFill
+    #   Check sCol and sFill (enough colour provided)
     if( sCol & (length( col ) < 2) ){ 
         stop( "At least 2 colors ('col') should be provided" )
     }   
+    
     if( sFill & (length( fill ) < 2) ){ 
         stop( "At least 2 colors ('fill') should be provided" )
     }   
     
     
+    #   Find out how many colours were provided
     n <- ifelse( sCol, length(col), length(fill) ) 
     
     
-    #   Has x NA values?
+    #   Has x any NA values?
     hasNA <- any( is.na( x ) ) 
     
     
@@ -1253,6 +1264,7 @@ setColorScale.default <- function(
                 length.out = n + 1 ) 
         }   
     }else{ 
+        # Test that the breaks are sorted correctly
         test <- sort( breaks, na.last = TRUE, decreasing = decreasing )
         test <- any( test != breaks ) | 
                 (length( unique( breaks ) ) != length( breaks )) 
@@ -1362,19 +1374,19 @@ setColorScale.default <- function(
         
         testInf <- from == +Inf
         mid[ testInf ] <- to[ which( testInf ) ] - dff[ which( testInf ) + 1L ]
-        #   By definition from == +Inf is when decreasing is TRUE
+        #   By definition from == +Inf implied that decreasing is TRUE
         
         testInf <- from == -Inf
         mid[ testInf ] <- to[ which( testInf ) ] - dff[ which( testInf ) + 1L ]
-        #   By definition from == -Inf is when decreasing is FALSE
+        #   By definition from == -Inf implied that decreasing is FALSE
         
         testInf <- to == -Inf
         mid[ testInf ] <- from[ which( testInf ) ] + dff[ which( testInf ) - 1L ]
-        #   By definition to == -Inf is when decreasing is TRUE
+        #   By definition to == -Inf implied that decreasing is TRUE
         
         testInf <- to == +Inf
         mid[ testInf ] <- from[ which( testInf ) ] + dff[ which( testInf ) - 1L ]
-        #   By definition to == +Inf is when decreasing is FALSE
+        #   By definition to == +Inf implied that decreasing is FALSE
         
         return( mid )
     }   
@@ -1493,6 +1505,12 @@ setColorScale.default <- function(
             space  = "Lab" ) 
         convert2[, "col" ]  <- cr( nConvert * int ) 
         
+        if( decreasing ){ 
+            # 2015-05-22 Attempt to fix a bug that causes the 
+            # legend to have colours in the wrong order!
+            convert2[, "col" ] <- rev( convert2[, "col" ] ) 
+        }   
+        
         
         # browser()
         
@@ -1587,11 +1605,14 @@ setColorScale.default <- function(
     
     
     if( sCol | sFill ){ 
-        if( decreasing ){ 
-            out[[ "iCol" ]] <- out[[ "iFill" ]] <- rev( convert2[, "col" ] ) #  !isNA
-        }else{ 
-            out[[ "iCol" ]] <- out[[ "iFill" ]] <- convert2[, "col" ] #  !isNA
-        }   
+        # if( decreasing ){ 
+            # out[[ "iCol" ]] <- out[[ "iFill" ]] <- rev( convert2[, "col" ] ) #  !isNA
+        # }else{ 
+            # out[[ "iCol" ]] <- out[[ "iFill" ]] <- convert2[, "col" ] #  !isNA
+        # }   
+        
+        # 2015-05-22 Attempt to fix a bug in color order (see above)
+        out[[ "iCol" ]] <- out[[ "iFill" ]] <- convert2[, "col" ] #  !isNA
         
         out[[ "iBreaks" ]] <- sort( 
             unique( c( convert2[, "from" ], convert2[ nrow( convert2 ), "to" ] ) ), 
@@ -1610,11 +1631,16 @@ setColorScale.default <- function(
     if( sCol ){ 
         out[[ "col" ]] <- function(x){ 
             #   Cast x into a data.frame
-            x <- data.frame( "values" = x, "id" = 1:length(x), 
-                "labels" = as.character( cut( x = x, 
+            x <- data.frame( 
+                "values" = x, 
+                "id"     = 1:length(x), 
+                "labels" = as.character( cut( 
+                    x      = x, 
                     breaks = c( convert[, "from" ], convert[ nrow(convert), "to" ] ), 
-                    labels = convert[, "labels" ], right = right, 
-                    include.lowest = include.lowest ) ), 
+                    labels = convert[, "labels" ], 
+                    right  = right, 
+                    include.lowest = include.lowest 
+                ) ), 
                 stringsAsFactors = FALSE ) 
             
             #   Merge with the colors
@@ -1661,12 +1687,20 @@ setColorScale.default <- function(
     if( sFill ){ 
         out[[ "fill" ]] <- function(x){ 
             #   Cast x into a data.frame
-            x <- data.frame( "values" = x, "id" = 1:length(x), 
-                "labels" = as.character( cut( x = x, 
+            x <- data.frame( 
+                "values" = x, 
+                "id"     = 1:length(x), 
+                "labels" = as.character( cut( 
+                    x      = x, 
                     breaks = c( convert[, "from" ], convert[ nrow(convert), "to" ] ), 
-                    labels = convert[, "labels" ], right = right, 
+                    labels = convert[, "labels" ], 
+                    right  = right, 
                     include.lowest = include.lowest ) ), 
                 stringsAsFactors = FALSE ) 
+            
+            if( decreasing ){
+                
+            }   
             
             #   Merge with the colors
             x <- merge( 
@@ -1716,7 +1750,11 @@ setColorScale.default <- function(
         
         
         #   Prepare the legend function
-        formals( out[[ "legend" ]] )[[ "fill" ]] <- convert2[, "col" ] 
+        if( decreasing ){ # Attempt to fix a bug. Not sure
+            formals( out[[ "legend" ]] )[[ "fill" ]] <- rev( convert2[, "col" ] ) 
+        }else{
+            formals( out[[ "legend" ]] )[[ "fill" ]] <- convert2[, "col" ] 
+        }   
         
         if( int != 1L ){    # Otherwise drawn continuous legend
             formals( out[[ "legend" ]] )[[ "groups" ]] <- convert2[, "groups" ] 

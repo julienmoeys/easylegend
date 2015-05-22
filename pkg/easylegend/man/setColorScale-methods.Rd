@@ -60,7 +60,7 @@ setColorScale(x, ...)
 
 \item{decreasing}{Logical value. If \code{TRUE} (default), the legend is ordered
  (sorted) in decreasing order (i.e. low values on the bottom of
- the color scale and high values on the top of the color scale).}
+ the colour scale and high values on the top of the colour scale).}
 
 \item{y.intersp}{Single numerical value. Character interspacing factor for
  vertical (y) spacing of the color legend. Passed to

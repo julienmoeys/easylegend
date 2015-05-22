@@ -1,6 +1,12 @@
 
     package easylegend
     
+VERSION 1.2.6
+
+    2015/05/22  Attempt to fix a bug in setColorScale() 
+        that outputs fill-colors in the wrong order 
+        (but in the right order for iFill and iBreaks)
+    
 VERSION 1.2.5
     
     2015/05/05  Compiled for R 3.2.0
