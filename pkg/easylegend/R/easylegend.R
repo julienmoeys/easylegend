@@ -1395,11 +1395,12 @@ setColorScale.default <- function(
     
     
     convert <- data.frame( 
-        "from"   = from, 
-        "to"     = to, 
-        "mid"    = mid, 
-        "col"    = if( sCol ){ col }else{ fill }, 
-        "labels" = NA_character_, 
+        "from"           = from, 
+        "to"             = to, 
+        "mid"            = mid, 
+        "col"            = if( sCol ){ col }else{ fill }, 
+        "labels"         = NA_character_, 
+        "internalLabels" = NA_character_, 
         stringsAsFactors = FALSE 
     )   
     rm( breaks, col, from, to, mid )  
@@ -1463,6 +1464,17 @@ setColorScale.default <- function(
         rm( labels )
     }   
     
+    #   Internal labels are necessary to account for the 
+    #   that rounding may accidentally creates the same 
+    #   labels for two different intervals
+    convert[, "internalLabels" ] <- .makeLabels( 
+        from     = convert[, "from" ], 
+        to       = convert[, "to" ], 
+        brackets = brackets, 
+        digits   = 16, 
+        nsmall   = 16, 
+        ... 
+    )   
     
     nConvert <- nrow( convert ) 
     
@@ -1474,20 +1486,28 @@ setColorScale.default <- function(
     }else{ 
         nConvert2 <- nConvert*int
         
+        # if( decreasing ){
+            # grp <- as.integer( rep( nConvert:1, each = int ) ) 
+        # }else{
+            # grp <- as.integer( rep( 1:nConvert, each = int ) ) 
+        # }   
+        
         convert2 <- data.frame( 
-            "from"   = rep( NA_real_, nConvert2 ), 
-            "to"     = rep( NA_real_, nConvert2 ), 
-            "mid"    = rep( NA_real_, nConvert2 ), 
-            "col"    = rep( NA_character_, nConvert2 ), 
-            "labels" = rep( NA_character_, nConvert2 ), 
-            #"groups"     = as.integer( rep( NA_real_, nConvert*int ) ), 
-            "groups"      = as.integer( rep( 1:nConvert, each = int ) ), 
-            #"groupLabels" = rep( NA_character_, nConvert*int ), 
+            "from"           = rep( NA_real_, nConvert2 ), 
+            "to"             = rep( NA_real_, nConvert2 ), 
+            "mid"            = rep( NA_real_, nConvert2 ), 
+            "col"            = rep( NA_character_, nConvert2 ), 
+            "labels"         = rep( NA_character_, nConvert2 ), 
+            "internalLabels" = rep( NA_character_, nConvert2 ), 
+            #"groups"        = as.integer( rep( NA_real_, nConvert*int ) ), 
+            "groups"         = as.integer( rep( 1:nConvert, each = int ) ) , 
+            #"groupLabels"   = rep( NA_character_, nConvert*int ), 
             stringsAsFactors = FALSE 
         )   
         
+        # rm( grp ) 
         
-        #   Interpolate colors, adding mid-point colors
+        #   Interpolate colours, adding mid-point colors
         cr  <- colorRampPalette( 
             colors = convert[, "col" ], 
             bias   = 1, 
@@ -1495,7 +1515,7 @@ setColorScale.default <- function(
         cr  <- cr( 2 * nConvert - 1 ) 
         
         
-        #   Interpolate colors, adding intermediate colors
+        #   Interpolate colours, adding intermediate colours
         cr  <- colorRampPalette( 
             colors = c( 
                 convert[ 1, "col" ], 
@@ -1503,44 +1523,60 @@ setColorScale.default <- function(
                 convert[ nConvert, "col" ] ), 
             bias   = 1, 
             space  = "Lab" ) 
-        convert2[, "col" ]  <- cr( nConvert * int ) 
+        convert2[, "col" ]  <- cr( nConvert2 ) 
         
-        if( decreasing ){ 
-            # 2015-05-22 Attempt to fix a bug that causes the 
-            # legend to have colours in the wrong order!
-            convert2[, "col" ] <- rev( convert2[, "col" ] ) 
-        }   
-        
-        
-        # browser()
+        # if( decreasing ){ 
+            # # 2015-05-22 Attempt to fix a bug that causes the 
+            # # legend to have colours in the wrong order!
+            # convert2[, "col" ] <- rev( convert2[, "col" ] ) 
+        # }   
         
         convert2 <- do.call( what = "rbind", args = lapply( 
-            X   = split( x = convert2, f = convert2[, "groups" ] ), 
+            X   = split( 
+                x = convert2, 
+                f = convert2[, "groups" ] ), 
             FUN = function(X){ 
                 # tmp <- split( x = convert2, f = convert2[, "groups" ] ); X <- tmp[[1L]]
                 
                 i <- X[ 1L, "groups" ] 
                 n <- nrow( X )
                 
-                fromTo2 <- fromTo <- sort( 
-                    unlist( convert[ i, c( "from", "to" ) ] ), 
-                    decreasing = decreasing ) 
+                # fromTo2 <- fromTo <- sort( 
+                    # unlist( convert[ i, c( "from", "to" ) ] ), 
+                    # decreasing = decreasing ) 
+                
+                fromTo2 <- fromTo <- unlist( convert[ i, c( "from", "to" ) ] ) 
                 
                 #   Neutralise infinite values
                 isInf <- is.infinite( fromTo ) 
                 
-                if( isInf[ "from" ] ){ fromTo[ "from" ] <- fromTo[ "to" ] + ifelse( decreasing, +1, -1 ) } 
-                if( isInf[ "to" ] ){ fromTo[ "to" ] <- fromTo[ "from" ] + ifelse( decreasing, -1, +1 ) }   
+                if( isInf[ "from" ] ){ 
+                    fromTo[ "from" ] <- fromTo[ "to" ] - 1L
+                    # ifelse( decreasing, +1, -1 ) 
+                }   
+                
+                if( isInf[ "to" ] ){ 
+                    fromTo[ "to" ] <- fromTo[ "from" ] + 1L
+                    # ifelse( decreasing, -1, +1 ) 
+                }   
+                
+                # X[, "from" ] <- seq( 
+                    # from       = fromTo[ ifelse( decreasing, 1L, 2L ) ], 
+                    # to         = fromTo[ ifelse( decreasing, 2L, 1L ) ], 
+                    # length.out = n+1L )[ -(n+1L) ] # -(n+1L)
                 
                 X[, "from" ] <- seq( 
-                    from       = fromTo[ ifelse( decreasing, 1L, 2L ) ], 
-                    to         = fromTo[ ifelse( decreasing, 2L, 1L ) ], 
+                    from       = fromTo[ 1L ], 
+                    to         = fromTo[ 2L ], 
                     length.out = n+1L )[ -(n+1L) ] # -(n+1L)
+                
+                # X[, "to" ] <- c( 
+                    # X[ -1L, "from" ], 
+                    # fromTo[ ifelse( decreasing, 2L, 1L ) ] ) 
                 
                 X[, "to" ] <- c( 
                     X[ -1L, "from" ], 
-                    fromTo[ ifelse( decreasing, 2L, 1L ) ] ) 
-                
+                    fromTo[ 2L ] ) 
                 
                 #   Re-attribute infinite values
                 if( isInf[ "from" ] ){ X[ 1L, "from" ] <- fromTo2[ "from" ] } 
@@ -1559,13 +1595,30 @@ setColorScale.default <- function(
         
         convert2 <- unique( convert2 ) 
         
-        #   Add a pretty label (although in principle not necessary)
+        convert2 <- convert2[ order( convert2[, "from" ], 
+            decreasing = decreasing ), ]
+        
+        #   Add a pretty label will be necessary when 
+        #   creating the fill function that will convert 
+        #   numeric values into fill-colours (with gradients)
         convert2[, "labels" ] <- .makeLabels( 
             from     = convert2[, "from" ], 
             to       = convert2[, "to" ], 
             brackets = brackets, 
             digits   = digits, 
             nsmall   = nsmall, 
+            ... 
+        )   
+        
+        #   Internal labels are necessary to account for the 
+        #   that rounding may accidentally creates the same 
+        #   labels for two different intervals
+        convert2[, "internalLabels" ] <- .makeLabels( 
+            from     = convert2[, "from" ], 
+            to       = convert2[, "to" ], 
+            brackets = brackets, 
+            digits   = 16, 
+            nsmall   = 16, 
             ... 
         )   
         
@@ -1580,7 +1633,7 @@ setColorScale.default <- function(
         
         attr( convert2, "legend" )[ isInfLeg ] <- ""
         
-        rm( isInfLeg )
+        rm( isInfLeg ) 
         
         # convert2[, "groupLabels" ] <- paste0( brackets[1], 
                 # format( min( convert2[, "from" ] ), digits = digits, nsmall = nsmall, ... ), brackets[2], 
@@ -1588,14 +1641,16 @@ setColorScale.default <- function(
         
     }   # end int != 1L
     
+    # browser() 
     
     if( hasNA ){ 
         convert  <- rbind( convert,  NA ) 
         
         nConvert <- nrow( convert ) 
-        convert[ nConvert, "col" ]    <- naCol 
-        convert[ nConvert, "labels" ] <- naLeg 
-        convert[ nConvert, "groups" ] <- nConvert 
+        convert[ nConvert, "col" ]            <- naCol 
+        convert[ nConvert, "labels" ]         <- naLeg 
+        convert[ nConvert, "internalLabels" ] <- naLeg 
+        convert[ nConvert, "groups" ]         <- nConvert 
         
         if( int != 1 ){ 
             attr( convert2, "legend" ) <- c( attr( convert2, "legend" ), 
@@ -1605,14 +1660,14 @@ setColorScale.default <- function(
     
     
     if( sCol | sFill ){ 
-        # if( decreasing ){ 
-            # out[[ "iCol" ]] <- out[[ "iFill" ]] <- rev( convert2[, "col" ] ) #  !isNA
-        # }else{ 
-            # out[[ "iCol" ]] <- out[[ "iFill" ]] <- convert2[, "col" ] #  !isNA
-        # }   
+        if( decreasing ){ 
+            out[[ "iCol" ]] <- out[[ "iFill" ]] <- rev( convert2[, "col" ] ) #  !isNA
+        }else{ 
+            out[[ "iCol" ]] <- out[[ "iFill" ]] <- convert2[, "col" ] #  !isNA
+        }   
         
-        # 2015-05-22 Attempt to fix a bug in color order (see above)
-        out[[ "iCol" ]] <- out[[ "iFill" ]] <- convert2[, "col" ] #  !isNA
+        # # 2015-05-22 Attempt to fix a bug in colour order (see above)
+        # out[[ "iCol" ]] <- out[[ "iFill" ]] <- convert2[, "col" ] #  !isNA
         
         out[[ "iBreaks" ]] <- sort( 
             unique( c( convert2[, "from" ], convert2[ nrow( convert2 ), "to" ] ) ), 
@@ -1630,24 +1685,29 @@ setColorScale.default <- function(
     
     if( sCol ){ 
         out[[ "col" ]] <- function(x){ 
+            breaks <- c( convert[, "from" ], convert[ nrow(convert), "to" ] )
+            lab    <- convert[, "internalLabels" ]
+            
             #   Cast x into a data.frame
             x <- data.frame( 
-                "values" = x, 
-                "id"     = 1:length(x), 
-                "labels" = as.character( cut( 
+                "values"         = x, 
+                "id"             = 1:length(x), 
+                "internalLabels" = as.character( cut( 
                     x      = x, 
-                    breaks = c( convert[, "from" ], convert[ nrow(convert), "to" ] ), 
-                    labels = convert[, "labels" ], 
+                    breaks = breaks, 
+                    labels = lab, 
                     right  = right, 
                     include.lowest = include.lowest 
                 ) ), 
                 stringsAsFactors = FALSE ) 
             
+            rm( breaks, lab ) 
+            
             #   Merge with the colors
             x <- merge( 
                 x     = x, 
                 y     = convert, # [,c( "values", "colors" ) ]
-                by    = "labels", 
+                by    = "internalLabels", 
                 all.x = TRUE, 
                 sort  = FALSE 
             )   
@@ -1668,12 +1728,32 @@ setColorScale.default <- function(
         environment( out[[ "col" ]] ) <- new.env() 
         
         #   Populate the environment
-        assign( "convert", convert2[, c( "labels", "col", "from", "to", "groups" ) ], # , "groupLabels"
+        assign( 
+            x     = "convert", 
+            value = convert2[, c( "labels", "internalLabels", "col", 
+                "from", "to", "groups" ) ], # , "groupLabels"
             envir = environment( out[[ "col" ]] ) ) 
         
-        assign( "right",          right,          envir = environment( out[[ "col" ]] ) ) 
-        assign( "include.lowest", include.lowest, envir = environment( out[[ "col" ]] ) ) 
-        assign( "naCol",          naCol,          envir = environment( out[[ "col" ]] ) ) 
+        assign( 
+            x     = "right",          
+            value = right,          
+            envir = environment( out[[ "col" ]] ) ) 
+        
+        assign( 
+            x     = "include.lowest", 
+            value = include.lowest, 
+            envir = environment( out[[ "col" ]] ) ) 
+        
+        assign( 
+            x     = "naCol",          
+            value = naCol,          
+            envir = environment( out[[ "col" ]] ) ) 
+        
+        assign(   # Part of bug fix for colour order
+            x     = "decreasing",          
+            value = decreasing,          
+            envir = environment( out[[ "col" ]] ) ) 
+        
         #assign( "style",          1,              envir = environment( out[[ "col" ]] ) ) 
         
         #   Legend function
@@ -1686,27 +1766,33 @@ setColorScale.default <- function(
     
     if( sFill ){ 
         out[[ "fill" ]] <- function(x){ 
+            breaks <- c( convert[, "from" ], convert[ nrow(convert), "to" ] )
+            lab    <- convert[, "internalLabels" ]
+            
+            if( decreasing ){
+                breaks <- rev( breaks ) 
+                lab    <- rev( lab ) 
+            }   
+            
             #   Cast x into a data.frame
             x <- data.frame( 
-                "values" = x, 
-                "id"     = 1:length(x), 
-                "labels" = as.character( cut( 
+                "values"         = x, 
+                "id"             = 1:length(x), 
+                "internalLabels" = as.character( cut( 
                     x      = x, 
-                    breaks = c( convert[, "from" ], convert[ nrow(convert), "to" ] ), 
-                    labels = convert[, "labels" ], 
+                    breaks = breaks, 
+                    labels = lab, 
                     right  = right, 
                     include.lowest = include.lowest ) ), 
                 stringsAsFactors = FALSE ) 
             
-            if( decreasing ){
-                
-            }   
+            rm( breaks, lab ) 
             
             #   Merge with the colors
             x <- merge( 
                 x     = x, 
                 y     = convert, # [,c( "values", "colors" ) ]
-                by    = "labels", 
+                by    = "internalLabels", 
                 all.x = TRUE, 
                 sort  = FALSE 
             )   
@@ -1727,12 +1813,31 @@ setColorScale.default <- function(
         environment( out[[ "fill" ]] ) <- new.env() 
         
         #   Populate the environment
-        assign( "convert", convert2[, c( "labels", "col", "from", "to", "groups" ) ], # , "groupLabels"
+        assign( 
+            x     = "convert", 
+            value = convert2[, c( "labels", "internalLabels", 
+                "col", "from", "to", "groups" ) ], # , "groupLabels"
             envir = environment( out[[ "fill" ]] ) ) 
         
-        assign( "right",          right,          envir = environment( out[[ "fill" ]] ) ) 
-        assign( "include.lowest", include.lowest, envir = environment( out[[ "fill" ]] ) ) 
-        assign( "naCol",          naCol,          envir = environment( out[[ "fill" ]] ) ) 
+        assign( 
+            x     = "right",          
+            value = right,          
+            envir = environment( out[[ "fill" ]] ) ) 
+        
+        assign( 
+            x     = "include.lowest", 
+            value = include.lowest, 
+            envir = environment( out[[ "fill" ]] ) ) 
+        
+        assign( 
+            x     = "naCol",          
+            value = naCol,          
+            envir = environment( out[[ "fill" ]] ) ) 
+        
+        assign(   # Part of bug fix for colour order
+            x     = "decreasing",          
+            value = decreasing,          
+            envir = environment( out[[ "fill" ]] ) ) 
         
         # assign( "style", ifelse( int == 1, 1, 2 ), envir = environment( out[[ "legend" ]] ) ) 
         
@@ -1742,6 +1847,7 @@ setColorScale.default <- function(
             nconvert2 <- nrow( convert2 ) 
             convert2[ nconvert2, "col" ]    <- naCol 
             # convert2[ nconvert2, "labels" ] <- naLeg 
+            
             convert2[ nconvert2, "groups" ] <- 
                 max( convert2[, "groups" ], na.rm = TRUE ) + 1  
         }else{ 
@@ -1750,11 +1856,13 @@ setColorScale.default <- function(
         
         
         #   Prepare the legend function
-        if( decreasing ){ # Attempt to fix a bug. Not sure
-            formals( out[[ "legend" ]] )[[ "fill" ]] <- rev( convert2[, "col" ] ) 
-        }else{
-            formals( out[[ "legend" ]] )[[ "fill" ]] <- convert2[, "col" ] 
-        }   
+        # if( decreasing ){ # Attempt to fix a bug. Not sure
+            # formals( out[[ "legend" ]] )[[ "fill" ]] <- rev( convert2[, "col" ] ) 
+        # }else{
+            # formals( out[[ "legend" ]] )[[ "fill" ]] <- convert2[, "col" ] 
+        # }   
+        
+        formals( out[[ "legend" ]] )[[ "fill" ]] <- convert2[, "col" ]
         
         if( int != 1L ){    # Otherwise drawn continuous legend
             formals( out[[ "legend" ]] )[[ "groups" ]] <- convert2[, "groups" ] 
@@ -1766,6 +1874,11 @@ setColorScale.default <- function(
     }   
     
     formals( out[[ "legend" ]] )[[ "y.intersp" ]] <- y.intersp 
+    
+    out[[ "convert" ]]  <- convert
+    out[[ "convert2" ]] <- convert2
+    
+    # browser()
     
     return( out ) 
 }   
