@@ -1548,16 +1548,41 @@ setColorScale.default <- function(
                 fromTo2 <- fromTo <- unlist( convert[ i, c( "from", "to" ) ] ) 
                 
                 #   Neutralise infinite values
-                isInf <- is.infinite( fromTo ) 
+                isInf      <- is.infinite( fromTo ) 
+                infReplace <- c( 
+                    "from" = NA_real_, 
+                    "to"   = NA_real_ ) 
                 
                 if( isInf[ "from" ] ){ 
-                    fromTo[ "from" ] <- fromTo[ "to" ] - 1L
-                    # ifelse( decreasing, +1, -1 ) 
+                    if( fromTo[ "from" ] == +Inf ){
+                        fromTo[ "from" ] <- 
+                            infReplace[ "from" ] <- 
+                            fromTo[ "to" ] + 1L
+                        
+                    }else{
+                        fromTo[ "from" ] <- 
+                            infReplace[ "from" ] <- 
+                            fromTo[ "to" ] - 1L
+                        
+                    }   
+                    # fromTo[ "from" ] <- fromTo[ "to" ] - 1L
+                    # # ifelse( decreasing, +1, -1 ) 
                 }   
                 
                 if( isInf[ "to" ] ){ 
-                    fromTo[ "to" ] <- fromTo[ "from" ] + 1L
-                    # ifelse( decreasing, -1, +1 ) 
+                    if( fromTo[ "to" ] == +Inf ){
+                        fromTo[ "to" ] <- 
+                            infReplace[ "to" ] <- 
+                            fromTo[ "from" ] + 1L
+                        
+                    }else{
+                        fromTo[ "to" ] <- 
+                            infReplace[ "to" ] <- 
+                            fromTo[ "from" ] - 1L
+                        
+                    }   
+                    # fromTo[ "to" ] <- fromTo[ "from" ] + 1L
+                    # # ifelse( decreasing, -1, +1 ) 
                 }   
                 
                 # X[, "from" ] <- seq( 
@@ -1579,8 +1604,21 @@ setColorScale.default <- function(
                     fromTo[ 2L ] ) 
                 
                 #   Re-attribute infinite values
-                if( isInf[ "from" ] ){ X[ 1L, "from" ] <- fromTo2[ "from" ] } 
-                if( isInf[ "to"   ] ){ X[ n,  "to"   ] <- fromTo2[ "to"   ] } 
+                if( isInf[ "from" ] ){ 
+                    X[ 
+                        X[, "from" ] == infReplace[ "from" ], 
+                        "from" 
+                    ] <- fromTo2[ "from" ] 
+                }   
+                
+                if( isInf[ "to" ] ){ 
+                    X[ 
+                        X[, "to" ] == infReplace[ "to" ],  
+                        "to" 
+                    ] <- fromTo2[ "to"   ] 
+                }   
+                
+                rm( infReplace, isInf )
                 
                 X[, "mid" ] <- rowMeans( x = X[, c( "from", "to" ) ] ) 
                 
@@ -1685,8 +1723,30 @@ setColorScale.default <- function(
     
     if( sCol ){ 
         out[[ "col" ]] <- function(x){ 
-            breaks <- c( convert[, "from" ], convert[ nrow(convert), "to" ] )
-            lab    <- convert[, "internalLabels" ]
+            
+            #   Find which rows are NA
+            rowIsNa <- apply( 
+                X      = convert[, c( "from", "to" ) ], 
+                MARGIN = 1, # rows
+                FUN    = function(x){ any( is.na( x ) ) } 
+            )   
+            
+            #   Find the breaks and labels (and remove NA's)
+            breaks <- c( 
+                convert[ !rowIsNa, "from" ], 
+                convert[ !rowIsNa, ][ nrow( convert[ !rowIsNa, ] ), "to" ] )
+            lab    <- convert[ !rowIsNa, "internalLabels" ]
+            
+            if( decreasing ){
+                breaks <- rev( breaks ) 
+                lab    <- rev( lab ) 
+            }   
+            
+            #   Add NA's again
+            if( any( !rowIsNa ) ){
+                breaks <- c( breaks, convert[ rowIsNa, "from" ][ 1L ] )
+                lab    <- c( lab, convert[ rowIsNa, "internalLabels" ][ 1L ] )
+            }   
             
             #   Cast x into a data.frame
             x <- data.frame( 
@@ -1766,13 +1826,32 @@ setColorScale.default <- function(
     
     if( sFill ){ 
         out[[ "fill" ]] <- function(x){ 
-            breaks <- c( convert[, "from" ], convert[ nrow(convert), "to" ] )
-            lab    <- convert[, "internalLabels" ]
+            
+            #   Find which rows are NA
+            rowIsNa <- apply( 
+                X      = convert[, c( "from", "to" ) ], 
+                MARGIN = 1, # rows
+                FUN    = function(x){ any( is.na( x ) ) } 
+            )   
+            
+            #   Find the breaks and labels (and remove NA's)
+            breaks <- c( 
+                convert[ !rowIsNa, "from" ], 
+                convert[ !rowIsNa, ][ nrow( convert[ !rowIsNa, ] ), "to" ] )
+            lab    <- convert[ !rowIsNa, "internalLabels" ]
             
             if( decreasing ){
                 breaks <- rev( breaks ) 
                 lab    <- rev( lab ) 
             }   
+            
+            #   Add NA's again
+            if( any( rowIsNa ) ){
+                breaks <- c( breaks, convert[ rowIsNa, "from" ][ 1L ] )
+                lab    <- c( lab, convert[ rowIsNa, "internalLabels" ][ 1L ] )
+            }   
+            
+            # browser()
             
             #   Cast x into a data.frame
             x <- data.frame( 
