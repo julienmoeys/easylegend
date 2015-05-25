@@ -1,1 +1,1 @@
-5b3b94b Fixing a bug in colour order in setColorScale()
+a629d6a yet another bug fix in color scale (when Inf)

@@ -1743,7 +1743,7 @@ setColorScale.default <- function(
             }   
             
             #   Add NA's again
-            if( any( !rowIsNa ) ){
+            if( any( rowIsNa ) ){
                 breaks <- c( breaks, convert[ rowIsNa, "from" ][ 1L ] )
                 lab    <- c( lab, convert[ rowIsNa, "internalLabels" ][ 1L ] )
             }   
@@ -1850,8 +1850,6 @@ setColorScale.default <- function(
                 breaks <- c( breaks, convert[ rowIsNa, "from" ][ 1L ] )
                 lab    <- c( lab, convert[ rowIsNa, "internalLabels" ][ 1L ] )
             }   
-            
-            # browser()
             
             #   Cast x into a data.frame
             x <- data.frame( 
