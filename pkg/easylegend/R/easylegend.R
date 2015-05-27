@@ -2208,3 +2208,1405 @@ matrix2image <- function(x){
     return( t( x )[ , dm[1]:1 ] ) # nc:1
 }   
 
+
+
+# setColourScale2 ===========================================
+
+.addColorGradientLegend2 <- function( 
+ l,      # output from legend, called a 1st time 
+ fill,   # fill colours
+ groups, # fill groups
+ #legend, # labels for each break-point 
+ border = "black" 
+){  
+    n       <- length( l$text$x ) 
+    uGroups <- unique( groups ) 
+    
+    # browser() 
+    
+    if( length( uGroups ) != (n-1L) ){ 
+        stop( sprintf( 
+            "Number of fill-groups (%s) should be equal to the number of original legend-labels (%s) minus one (internal error)", 
+            length( uGroups ), n 
+        ) ) 
+    }   
+    
+    
+    if( length( groups ) != length( fill ) ){ 
+        stop( "Length of 'fill' and 'groups' differ (internal error)" ) 
+    }   
+    
+    
+    # dx <- max( abs( diff(l$text$x) ) )
+    dy <- max( abs( diff(l$text$y) ) ) 
+    
+    #   Find the width of the filled boxes
+    fillWidth <- min(l$text$x) - l$rect$left 
+    
+    yy <- rep( NA_real_, n+1 )
+    
+    for( i in 1:(n-1L) ){
+        # if( i == 1 ){ 
+            # ytop <- l$text$y[ i ] + dy/2 # + dy/4
+        # }else{ 
+            # ytop <- l$text$y[ i ] + dy/2
+        # }   
+        
+        ytop <- l$text$y[ i ] + dy/2
+        
+        # if( i == n ){ 
+            # ybottom <- l$text$y[i] - dy/2 # - dy/4
+        # }else{ 
+            # ybottom <- l$text$y[i] - dy/2
+        # }   
+        
+        ybottom <- l$text$y[ i ] - dy/2
+        
+        dy2 <- ytop - ybottom
+        
+        sel      <- groups == uGroups[ i ]
+        nSubFill <- sum( sel )
+        subFill  <- fill[ sel ] 
+        
+        for( j in 1:nSubFill ){ 
+            rect(
+                xleft   = l$rect$left + fillWidth*1/3, 
+                ybottom = ytop - dy2 * j/nSubFill, 
+                xright  = l$rect$left + fillWidth*2/3, 
+                ytop    = ytop - dy2 * (j-1)/nSubFill, 
+                border  = NA, 
+                col     = subFill[ j ] ) 
+        }   
+
+        
+        # rect(
+            # xleft   = l$rect$left + fillWidth*1/3, 
+            # ybottom = ybottom, 
+            # xright  = l$rect$left + fillWidth*2/3, 
+            # ytop    = ytop, 
+            # border  = border ) 
+        
+        # segments(
+            # x0  = l$rect$left + fillWidth*2/3, 
+            # y0  = l$text$y[ i ], 
+            # x1  = l$rect$left + fillWidth*3/4, 
+            # y1  = l$text$y[ i ], 
+            # col = border 
+        # )   
+        
+        
+        #   Segment for the boundary thick mark
+        segments(
+            x0  = l$rect$left + fillWidth*2/3, 
+            y0  = ytop, 
+            x1  = l$rect$left + fillWidth*3/4, 
+            y1  = ytop, 
+            col = border 
+        )   
+        
+        
+        #   Save y values
+        yy[ i ] <- ytop 
+        
+        if( i == (n-1L) ){ 
+            yy[ i+1 ] <- ybottom 
+            
+            segments(
+                x0  = l$rect$left + fillWidth*2/3, 
+                y0  = ybottom, 
+                x1  = l$rect$left + fillWidth*3/4, 
+                y1  = ybottom, 
+                col = border 
+            )   
+        }   
+    }   
+    
+    #   Big rectangle
+    rect(
+        xleft   = l$rect$left + fillWidth*1/3, 
+        ybottom = min(l$text$y) - dy/2, # - dy/4
+        xright  = l$rect$left + fillWidth*2/3, 
+        ytop    = max(l$text$y) + dy/2, # + dy/4
+        border  = border ) 
+    
+    
+    return( yy ) 
+}   
+
+    # plot( 1, 1 ) 
+    # n    <- 4
+    # l    <- legend("topright",fill="transparent",legend=1:n,border="transparent")
+    # fill <- hsv( h = seq( 0, 1, length.out = (n*2)+1 )[ -((n*2)+1) ] ) 
+    # .addColorGradientLegend2( l = l, fill = fill, groups = rep( 1:n, each = 2 ) )
+
+
+
+#' Prepare colour scale and legend (col, fill) from continuous-numeric data.
+#'
+#' Prepare colour scale and legend (col, fill) from 
+#'  continuous-numeric data. \code{setColourScale2} is a partial 
+#'  rewriting of \code{\link{setColorScale}}.
+#'  
+#'
+#'
+#'@param x
+#'  A vector of numerical values (continous).
+#'
+#'@param col
+#'  Logical value or vector of character strings representing 
+#'  colours. If \code{TRUE} or vector of colours, a continuous 
+#'  colour scale is defined for 'x'. \code{col} and \code{fill} 
+#'  can't be set simultaneously (the corresponding legend would 
+#'  not work). \code{int} must be 1 if \code{col} is set. There 
+#'  must be as many colours as \code{breaks}.
+#'
+#'@param fill
+#'  Logical value or vector of character strings representing 
+#'  fill-colours. If \code{TRUE} or vector of colours, a 
+#'  continuous fill-colour scale is defined for 'x'. \code{col} 
+#'  and \code{fill} can't be set simultaneously (the 
+#'  corresponding legend would not work). There must be as 
+#'  many fill-colours as \code{breaks}.
+#'
+#'@param breaks
+#'  See \code{\link[base]{cut}}. There must be as many breaks 
+#'  as colours (i.e. \code{length(col) == length(breaks)} or 
+#'  \code{length(fill) == length(breaks)}). If \code{NULL}, 
+#'  the breaks will be generated internally after \code{nBreaks} 
+#'  (see below). \code{breaks} should be ordered (\code{NA} 
+#'  last), with no replica, and consistent with the argument 
+#'  \code{decreasing}.
+#'
+#'@param int
+#'  Single integer value. Number of colour intervals to be 
+#'  defined in between the main fill-colours. \code{int} must 
+#'  be 1 if \code{col} is set. Intermediate colours are 
+#'  generated with \code{\link[grDevices]{colorRampPalette}}.
+#'
+#'@param brackets
+#'  Vector of 3 characters. Used to generate customise 
+#'  legend-labels, if \code{labels} is \code{NULL}. 
+#'
+#'@param labels
+#'  See \code{\link[base]{cut}}.
+#'
+#'@param right
+#'  See \code{\link[base]{cut}}.
+#'
+#'@param include.lowest
+#'  See \code{\link[base]{cut}}.
+#'
+#'@param digits
+#'  See \code{\link[base]{format}}. Number formatting in the 
+#'  legend.
+#'
+#'@param nsmall
+#'  See \code{\link[base]{format}}. Number formatting in the 
+#'  legend.
+#'
+#'@param naCol
+#'  Single character string. Colour for \code{NA} (missing) 
+#'  values.
+#'
+#'@param naLeg
+#'  Single character string. Legend (label) for \code{NA} 
+#'  (missing) values.
+#'
+#'@param decreasing
+#'  Logical value. If \code{TRUE} (default), the legend is 
+#'  ordered (sorted) in decreasing order (i.e. low values on 
+#'  the bottom of the colour scale and high values on the top 
+#'  of the colour scale).
+#'
+#'@param y.intersp 
+#'  Single numerical value. Character inter-spacing factor 
+#'  for vertical (y) spacing of the colour legend. Passed to 
+#'  \code{\link[graphics]{legend}}.
+#'
+#'@param nBreaks
+#'  Single integer value. Number of breaks that must be 
+#'  generated internally when \code{breaks} is not specified 
+#'  (\code{NULL}).
+#'
+#'@param alpha
+#'  Single logical value. Passed internally to 
+#'  \code{\link[grDevices]{colorRampPalette}}
+#'
+#'@param \dots
+#'  Additional parameters passed to specific methods.
+#'
+#'
+#'@return 
+#'  Returns a list of 2 \code{\link[base]{function}}: 
+#'  \code{col} or \code{fill}, a function that converts 
+#'  \code{x}-like values into (fill)colours; 
+#'  \code{legend}, a function to draw a legend on a plot with 
+#'  the correct (fill)colours and legend. That function accepts 
+#'  \code{...} arguments, passed to the original 
+#'  \code{\link[graphics]{legend}} function.
+#'
+#'
+#'@example inst/examples/setColourScale2-examples.R
+#'
+#'@importFrom grDevices colorRampPalette
+#'
+#'@rdname setColourScale2-methods
+#'
+#'@export 
+#'
+setColourScale2 <- function(
+ x, 
+ ...
+){  
+    UseMethod( "setColourScale2" )
+}   
+
+
+#'@rdname setColourScale2-methods
+#'
+#'@method setColourScale2 default
+#'
+#'@export 
+#'
+setColourScale2.default <- function( 
+    x, 
+    col      = FALSE, 
+    fill     = FALSE, 
+    breaks   = NULL, 
+    int      = 1L, 
+    naCol    = "lightgray", 
+    naLeg    = "na", 
+    brackets = c( "", " ", "" ), 
+    labels   = NULL, 
+    right    = FALSE,       # see cut()
+    include.lowest = TRUE,  # see cut()
+    digits   = 3L,          # see format()
+    nsmall   = 3L,          # see format()
+    decreasing = TRUE, 
+    y.intersp = 1.5, 
+    nBreaks = 5L, 
+    alpha = FALSE, 
+    ...      # passed to format
+){  
+    #   sCol is TRUE if colour-legend should be calculated, 
+    #   FALSE otherwise
+    sCol  <- ifelse( all( is.logical( col ) ), col[1L], TRUE ) 
+    
+    #   sFill is TRUE if fill-legend should be calculated, 
+    #   FALSE otherwise
+    sFill <- ifelse( all( is.logical( fill ) ), fill[1L], TRUE ) 
+    
+    #   Check that either col or fill was specified (not both)
+    if( !any( c( sCol, sFill ) ) ){ 
+        stop( "Either 'col' or 'fill' must be set (to TRUE or a vector of colours)" ) 
+        
+    }else if( sCol & sFill ){ 
+        stop( "Specify either 'col', or 'fill', but not both at the same time" ) 
+        
+    }
+    
+    
+    #   Reset 'nBreak's if 'breaks' is supplied and check that 
+    #   there are enough breaks
+    if( !is.null( breaks ) ){
+        # test that there are no NA in breaks
+        if( any( is.na( breaks ) ) ){
+            stop( "NA not allowed in breaks. Use arguments 'naLeg' and 'naCol' instead" )
+        }   
+        
+        if( length( breaks ) < 2L ){
+            stop( sprintf( 
+                "When non-NULL, length(breaks) must be at least 2 (now %s)", 
+                length(breaks)
+            ) ) 
+        }   
+        
+        if( length( breaks[ is.finite( breaks ) ] ) < 1L ){
+            stop( sprintf( 
+                "The number of finite breaks must be at least 1 (now %s)", 
+                length( breaks[ is.finite( breaks ) ] ) 
+            ) ) 
+        }   
+        
+        nBreaks <- length( breaks ) 
+    }else{
+        if( nBreaks < 2 ){
+            stop( sprintf( 
+                "nBreaks < 2. nBreaks must be at least 2 (now %s)", 
+                nBreaks
+            ) ) 
+        }   
+        
+    }   
+    
+    
+    #   Case: a colour-legend should be generated
+    #       and no colour are specified. 
+    #       Generating a 5-colour range
+    if( sCol & all( is.logical( col ) ) ){ 
+        # col <- gray( c( .75, .50, .25, 0 ) ) 
+        if( decreasing ){
+            col <- hsv( 
+                h = 0.55, # 0.04 # 0.21 # 0.38 # 0.55
+                s = seq( .8,  .20, length.out = nBreaks ), 
+                v = seq( .3,  .95, length.out = nBreaks ) )
+                #        dark light 
+        }else{
+            col <- hsv( 
+                h = 0.55, # 0.04 # 0.21 # 0.38 # 0.55
+                s = seq( .20,  .8, length.out = nBreaks ), 
+                v = seq( .95,  .3, length.out = nBreaks ) )
+                #        light dark
+        }   
+
+    }
+    
+    
+    #   Case: a fill-legend should be generated
+    #       and no colour are specified
+    #       Generating a 5-colour range
+    if( sFill & all( is.logical( fill ) ) ){ 
+        # fill <- gray( c( .75, .50, .25, 0 ) ) 
+        if( decreasing ){
+            fill <- hsv( 
+                h = 0.55, # 0.04 # 0.21 # 0.38 # 0.55
+                s = seq( .8,  .20, length.out = nBreaks ), 
+                v = seq( .3,  .95, length.out = nBreaks ) )
+                #        dark light 
+        }else{
+            fill <- hsv( 
+                h = 0.55, # 0.04 # 0.21 # 0.38 # 0.55
+                s = seq( .20,  .8, length.out = nBreaks ), 
+                v = seq( .95,  .3, length.out = nBreaks ) )
+                #        light dark
+        }   
+        
+    }   
+    
+    
+    #   Check that col or fill are consistent (in length) 
+    #   with breaks
+    if( sCol & (length(col) != nBreaks) ){
+        stop( sprintf(
+            "length(col) must be equal to nBreaks or length(breaks). Now respectively %s, %s and %s", 
+            length(col), nBreaks, length(breaks) 
+        ) ) 
+    }   
+    
+    if( sFill & (length(fill) != nBreaks) ){
+        stop( sprintf(
+            "length(fill) must be equal to nBreaks or length(breaks). Now respectively %s, %s and %s", 
+            length(fill), nBreaks, length(breaks) 
+        ) ) 
+    }   
+    
+    
+    #   Check and sanitise 'int'
+    int <- as.integer( round( int, 0 ) ) 
+    int <- ifelse( int[1] < 1L, 1L, int[1] )
+    
+    if( sCol & (int > 1) ){ 
+        stop( "If 'col' is specified, then 'int' must be 1 (legend won't work otherwise). Use 'fill' as a workaround" ) 
+        
+    }   
+    
+    if( (int%%2 == 1) & (int != 1) ){ 
+        stop( "'int' must be an odd integer or 1" )
+    }   
+    
+    
+    # #   Check sCol and sFill (enough colour provided) # # Useless now
+    # if( sCol & (length( col ) < 2) ){ 
+        # stop( "At least 2 colours ('col') should be provided" )
+    # }   
+    
+    # if( sFill & (length( fill ) < 2) ){ 
+        # stop( "At least 2 colours ('fill') should be provided" )
+    # }   
+    
+    
+    # #   Find out how many colours were provided
+    # n <- ifelse( sCol, length(col), length(fill) ) 
+    
+    
+    #   Has x any NA values?
+    hasNA <- any( is.na( x ) ) 
+    
+    
+    #   Define the breaks in x values
+    if( is.null( breaks ) ){ 
+        if( decreasing ){ 
+            breaks <- seq( 
+                from = max( x, na.rm = hasNA ), 
+                to   = min( x, na.rm = hasNA ), 
+                length.out = nBreaks ) 
+        }else{ 
+            breaks <- seq( 
+                from = min( x, na.rm = hasNA ), 
+                to   = max( x, na.rm = hasNA ), 
+                length.out = nBreaks ) 
+        }   
+        
+        breaksSanitized <- breaks
+    }else{ 
+        # Test that the breaks are sorted correctly
+        test <- sort( breaks, na.last = TRUE, decreasing = decreasing )
+        #   Note: na.last not needed in principle
+        
+        test <- any( test != breaks ) | 
+                (length( unique( breaks ) ) != length( breaks )) 
+        
+        if( test ){ 
+            stop( "'breaks' should be ordered, with no replica, and consistent with argument 'decreasing'" ) 
+        }   
+        rm( test )
+        
+        
+        #   breaks2 is a copy of breaks where infinite values
+        #   will be removed. Usefull for estimating intermediate
+        #   steps in the breaks
+        breaksSanitized <- breaks
+        
+        #   Test for infinite values
+        if( any( is.infinite( breaks ) ) ){
+            #   Calculate the maximum non-infinite difference 
+            #   between the breaks (absolute value)
+            maxAbsDiff <- abs( diff( breaks ) ) 
+            maxAbsDiff <- maxAbsDiff[ is.finite( maxAbsDiff ) ] 
+            if( length( maxAbsDiff ) == 0 ){
+                #   Case: less than 2 finite breaks
+                maxAbsDiff <- 1
+            }else{
+                #   Case: at least 2 finite breaks
+                maxAbsDiff <- max( maxAbsDiff )
+            }   
+            
+            if( decreasing ){
+                if( breaks[ 1L ] == +Inf ){
+                    breaksSanitized[ 1L ] <- max( breaks[ is.finite( breaks ) ] ) + maxAbsDiff 
+                }   
+                
+                if( breaks[ length( breaks ) ] == -Inf ){
+                    breaksSanitized[ length( breaks ) ] <- min( breaks[ is.finite( breaks ) ] ) - maxAbsDiff 
+                }   
+            }else{ # increasing
+                if( breaks[ 1L ] == -Inf ){
+                    breaksSanitized[ 1L ] <- min( breaks[ is.finite( breaks ) ] ) - maxAbsDiff 
+                }   
+                
+                if( breaks[ length( breaks ) ] == +Inf ){
+                    breaksSanitized[ length( breaks ) ] <- max( breaks[ is.finite( breaks ) ] ) + maxAbsDiff 
+                }   
+            }   
+        }   
+        
+    }   
+    
+    
+    #   Output list
+    out <- list( 
+        "legend" = function( 
+            # Arguments that exists in legend()
+            x, 
+            y           = NULL, 
+            legend, 
+            col         = NULL, 
+            fill        = NULL, 
+            border      = "black", 
+            cex         = 1, 
+            text.col    = par( "col" ), 
+            text.font   = NULL, 
+            title.col   = par( "col" ), 
+            horiz       = FALSE, 
+            title       = NULL, 
+            y.intersp   = y.intersp, 
+            ..., 
+            
+            #   Arguments that do not exists in legend() (extra)
+            groups      = NULL,  
+            style       = 1L    # style == 1L means no intermediate colours. 
+                                # style != 1L means with intermediate colours
+            
+        ){  
+            # if( !exists( "style" ) ){ style <- 1L }
+            
+            if( horiz ){ stop( "'horiz' = TRUE not supported in easylegend::setColourScale2" ) }
+            
+            #   Prepare a list (of arguments) that will be passed 
+            #   to the function legend using do.call()
+            
+            arguments <- list( 
+                "x"         = x, 
+                "y"         = y, 
+                "title.col" = title.col, 
+                "title"     = title, 
+                "y.intersp" = y.intersp ) 
+            
+            if( !is.null(col) ){ 
+                arguments <- c( arguments, list( "col" = col, 
+                    "legend" = legend ) ) 
+                
+            }else if( style != 1 ){ # !is.null( fill )
+                # style != 1 means a colour ramp with intermediate colours
+                
+                transpLeg <- legend[ order( nchar( legend ) ) ] 
+                transpLeg <- transpLeg[ -1 ]
+                
+                arguments <- c( arguments, list( 
+                    "fill"     = "transparent", 
+                    "border"   = "transparent", 
+                    "legend"   = transpLeg, 
+                    "text.col" = "transparent" ) ) 
+                
+            }else{ 
+                arguments <- c( arguments, list( "fill" = fill, 
+                    "legend" = legend ) ) 
+            }   
+            
+            arguments <- c( arguments, list(...) )
+            
+            lRes <- do.call( 
+                what = get( "legend", pos = "package:graphics" ), 
+                args = arguments ) 
+            
+            if( style != 1L ){ # (!is.null( fill )) & (!is.null( groups ))
+                # style != 1 means a colour ramp with intermediate colours
+                yy <- .addColorGradientLegend2( 
+                    l      = lRes, 
+                    fill   = fill, 
+                    groups = groups, 
+                    border = border ) 
+                
+                # if( missing( "cex"       ) ){ cex       <- 1            } 
+                # if( missing( "text.col"  ) ){ text.col  <- par( "col" ) } 
+                # if( missing( "text.font" ) ){ text.font <- NULL         } 
+                
+                text( x = lRes$text$x[1], y = yy, 
+                    labels = legend, # cex = cex*par("cex"), 
+                    col = text.col, pos = 4, offset = 0 ) # vfont = text.font, 
+                
+            }   
+            
+            return( invisible( arguments ) ) 
+        }   
+    )    
+    
+    environment( out[[ "legend" ]] ) <- new.env() 
+    
+    class( out ) <- "numericGraphics"
+    
+    
+    # breaks <- c(Inf, 1, 0, -1, -Inf); decreasing <- TRUE  
+    # breaks <- c(-Inf, -1, 0, 1, Inf); decreasing <- FALSE  
+    
+    
+    # #   Function to set the midpoint values for cases with infinite from or to
+    # .sanitiseMid <- function( mid, from, to ){ 
+        # browser()
+        
+        # dff <- diff( c( from, to[ length( to ) ] ) )/2
+        
+        # testInf <- from == +Inf
+        # mid[ testInf ] <- to[ which( testInf ) ] - dff[ which( testInf ) + 1L ]
+        # #   By definition from == +Inf implied that decreasing is TRUE
+        
+        # testInf <- from == -Inf
+        # mid[ testInf ] <- to[ which( testInf ) ] - dff[ which( testInf ) + 1L ]
+        # #   By definition from == -Inf implied that decreasing is FALSE
+        
+        # testInf <- to == -Inf
+        # mid[ testInf ] <- from[ which( testInf ) ] + dff[ which( testInf ) - 1L ]
+        # #   By definition to == -Inf implied that decreasing is TRUE
+        
+        # testInf <- to == +Inf
+        # mid[ testInf ] <- from[ which( testInf ) ] + dff[ which( testInf ) - 1L ]
+        # #   By definition to == +Inf implied that decreasing is FALSE
+        
+        # return( mid )
+    # }   
+    
+    
+    #   Find out the mid-points between breaks and the 
+    #   new breakpoints (from and to)
+    mid <- breaksSanitized[ 1:(length(breaksSanitized)-1) ] + (diff( breaksSanitized )/2) # ifelse( decreasing, +1, -1 )
+    
+    from <- c( breaks[ 1L ], mid )
+    to <- c( mid, breaks[ nBreaks ] ) 
+    
+    # fromSanit <- c( breaksSanitized[ 1L ], mid )
+    # toSanit   <- c( mid, breaksSanitized[ nBreaks ] ) 
+    
+    convert <- data.frame( 
+        "from"           = from, 
+        "to"             = to, 
+        # "fromSanit"      = fromSanit, 
+        # "toSanit"        = toSanit, 
+        "col"            = if( sCol ){ col }else{ fill }, 
+        "labels"         = NA_character_, 
+        "internalLabels" = NA_character_, 
+        stringsAsFactors = FALSE 
+    )   
+    
+    # browser()
+    
+    rm( breaks, col, from, to, mid ) # , fromSanit, toSanit
+    
+    
+    #   Prepare the colour-class labels (including replacing 
+    #   infinite with > 2nd last break or lower than 2nd break)
+    .makeLabels <- function( 
+        from, 
+        to, 
+        brackets = brackets, 
+        digits   = digits, 
+        nsmall   = nsmall, 
+        ... 
+    ){  
+        labs <- paste0( 
+            brackets[1], 
+            format( from, digits = digits, nsmall = nsmall, ... ), 
+            brackets[2], 
+            format( to,   digits = digits, nsmall = nsmall, ... ), 
+            brackets[3] ) 
+        
+        if( any( testInf <- from == +Inf ) ){ 
+            labs[ testInf ] <- sprintf( 
+                "> %s", 
+                format( to[ testInf ], digits = digits, nsmall = nsmall, ... ) )       
+        }   
+        
+        if( any( testInf <- from == -Inf ) ){ 
+            labs[ testInf ] <- sprintf( 
+                "< %s", 
+                format( to[ testInf ], digits = digits, nsmall = nsmall, ... ) )    
+        }   
+        
+        if( any( testInf <- to == +Inf ) ){ 
+            labs[ testInf ] <- sprintf( 
+                "> %s", 
+                format( from[ testInf ], digits = digits, nsmall = nsmall, ... ) )    
+        }   
+        
+        if( any( testInf <- to == -Inf ) ){ 
+            labs[ testInf ] <- sprintf( 
+                "< %s", 
+                format( from[ testInf ], digits = digits, nsmall = nsmall, ... ) )    
+        }   
+        
+        return( labs )
+    }   
+    
+    if( is.null( labels ) ){ 
+        convert[, "labels" ] <- .makeLabels( 
+            from     = convert[, "from" ], 
+            to       = convert[, "to" ], 
+            brackets = brackets, 
+            digits   = digits, 
+            nsmall   = nsmall, 
+            ... 
+        )   
+        
+    }else{ 
+        convert[, "labels" ] <- labels 
+        rm( labels )
+    }   
+    
+    #   Internal labels are necessary to account for the 
+    #   that rounding may accidentally creates the same 
+    #   labels for two different intervals
+    convert[, "internalLabels" ] <- .makeLabels( 
+        from     = convert[, "from" ], 
+        to       = convert[, "to" ], 
+        brackets = brackets, 
+        digits   = 16, 
+        nsmall   = 16, 
+        ... 
+    )   
+    
+    # nBreaks <- nrow( convert ) 
+    
+    if( int == 1L ){ 
+        convert2              <- convert 
+        convert2[, "groups" ] <- 1:nBreaks 
+        #convert2[, "groupLabels" ] <- convert2[, "labels" ] 
+        
+    }else{ 
+        # nConvert2 <- ((nBreaks - 1L) * int) + 1L
+        
+        # convert2 <- data.frame( 
+            # "from"           = rep( NA_real_, nConvert2 ), 
+            # "to"             = rep( NA_real_, nConvert2 ), 
+            # # "fromSanit"      = rep( NA_real_, nConvert2 ), 
+            # # "toSanit"        = rep( NA_real_, nConvert2 ), 
+            # # "mid"          = rep( NA_real_, nConvert2 ), 
+            # "col"            = rep( NA_character_, nConvert2 ), 
+            # "labels"         = rep( NA_character_, nConvert2 ), 
+            # "internalLabels" = rep( NA_character_, nConvert2 ), 
+            # # "groups"       = as.integer( rep( 1:nBreaks, each = int ) ) , 
+            # "groups"         = round( seq( 
+                # from         = 1, 
+                # to           = nBreaks, 
+                # length.out   = nConvert2 ), 0 ), 
+            # stringsAsFactors = FALSE 
+        # )           
+        
+        # #   Interpolate colours, adding intermediate colours
+        # cr  <- grDevices::colorRampPalette( 
+            # colors = convert[, "col" ], 
+            # bias   = 1, 
+            # space  = "Lab", 
+            # alpha  = alpha ) 
+        # convert2[, "col" ]  <- cr( nConvert2 ) 
+        
+        convert2Templates <- data.frame( 
+            "from"           = rep( NA_real_, int ), 
+            "to"             = rep( NA_real_, int ), 
+            #"fromSanit"      = rep( NA_real_, int ), 
+            #"toSanit"        = rep( NA_real_, int ), 
+            "col"            = rep( NA_character_, int ), 
+            "labels"         = rep( NA_character_, int ), 
+            "internalLabels" = rep( NA_character_, int ), 
+            "groups"         = rep( NA_integer_, int ), 
+            stringsAsFactors = FALSE 
+        )           
+        
+        # convert2 <- do.call( what = "rbind", args = lapply( 
+            # X   = split( 
+                # x = convert2, 
+                # f = convert2[, "groups" ] ), 
+            # FUN = function(X){ 
+                # # tmp <- split( x = convert2, f = convert2[, "groups" ] ); X <- tmp[[1L]]
+                
+                # i <- X[ 1L, "groups" ] 
+                # n <- nrow( X )
+                
+                # # fromTo2 <- fromTo <- sort( 
+                    # # unlist( convert[ i, c( "from", "to" ) ] ), 
+                    # # decreasing = decreasing ) 
+                
+                # fromTo2 <- fromTo <- unlist( convert[ i, c( "from", "to" ) ] ) 
+                
+                # #   Neutralise infinite values
+                # isInf      <- is.infinite( fromTo ) 
+                # infReplace <- c( 
+                    # "from" = NA_real_, 
+                    # "to"   = NA_real_ ) 
+                
+                # if( isInf[ "from" ] ){ 
+                    # if( fromTo[ "from" ] == +Inf ){
+                        # fromTo[ "from" ] <- 
+                            # infReplace[ "from" ] <- 
+                            # fromTo[ "to" ] + 1L
+                        
+                    # }else{
+                        # fromTo[ "from" ] <- 
+                            # infReplace[ "from" ] <- 
+                            # fromTo[ "to" ] - 1L
+                        
+                    # }   
+                    # # fromTo[ "from" ] <- fromTo[ "to" ] - 1L
+                    # # # ifelse( decreasing, +1, -1 ) 
+                # }   
+                
+                # if( isInf[ "to" ] ){ 
+                    # if( fromTo[ "to" ] == +Inf ){
+                        # fromTo[ "to" ] <- 
+                            # infReplace[ "to" ] <- 
+                            # fromTo[ "from" ] + 1L
+                        
+                    # }else{
+                        # fromTo[ "to" ] <- 
+                            # infReplace[ "to" ] <- 
+                            # fromTo[ "from" ] - 1L
+                        
+                    # }   
+                # }   
+                
+                # X[, "from" ] <- seq( 
+                    # from       = fromTo[ 1L ], 
+                    # to         = fromTo[ 2L ], 
+                    # length.out = n+1L )[ -(n+1L) ] # -(n+1L)
+                
+                # # X[, "to" ] <- c( 
+                    # # X[ -1L, "from" ], 
+                    # # fromTo[ ifelse( decreasing, 2L, 1L ) ] ) 
+                
+                # X[, "to" ] <- c( 
+                    # X[ -1L, "from" ], 
+                    # fromTo[ 2L ] ) 
+                
+                # #   Re-attribute infinite values
+                # if( isInf[ "from" ] ){ 
+                    # X[ 
+                        # X[, "from" ] == infReplace[ "from" ], 
+                        # "from" 
+                    # ] <- fromTo2[ "from" ] 
+                # }   
+                
+                # if( isInf[ "to" ] ){ 
+                    # X[ 
+                        # X[, "to" ] == infReplace[ "to" ],  
+                        # "to" 
+                    # ] <- fromTo2[ "to"   ] 
+                # }   
+                
+                # rm( infReplace, isInf )
+                
+                # # X[, "mid" ] <- rowMeans( x = X[, c( "from", "to" ) ] ) 
+                
+                # # X[, "mid" ] <- .sanitiseMid( # Function defined above
+                    # # "mid"  = X[, "mid" ], 
+                    # # "from" = X[, "from" ], 
+                    # # "to"   = X[, "to" ] ) 
+                
+                # return( X ) 
+            # }   
+        # ) ) 
+        
+        convert2 <- do.call( what = "rbind", args = lapply( 
+            X   = 1:(nBreaks-1L), 
+            FUN = function(i){
+                fromSanit <- breaksSanitized[ i ] 
+                toSanit   <- breaksSanitized[ i + 1L ] 
+                
+                out <- convert2Templates
+                
+                newBreaks <- seq( 
+                    from       = fromSanit, 
+                    to         = toSanit, 
+                    length.out = int+1L )
+                
+                out[, "from" ] <- newBreaks[ 1:(length(newBreaks)-1L) ] 
+                out[, "to" ]   <- newBreaks[ 2:length(newBreaks) ] 
+                
+                if( sCol ){ 
+                    cl <- grDevices::colorRampPalette( 
+                        colors = col[ c( i, i + 1L ) ], 
+                        bias   = 1, 
+                        space  = "Lab", 
+                        alpha  = alpha ) 
+                }else{ 
+                    cl <- grDevices::colorRampPalette( 
+                        colors = fill[ c( i, i + 1L ) ], 
+                        bias   = 1, 
+                        space  = "Lab", 
+                        alpha  = alpha ) 
+                }   
+                
+                out[, "col" ] <- cl( int )
+                
+                out[, "groups" ] <- i 
+                
+                return( out )
+            }   
+        ) ) 
+        
+        #   Only keeps unique values. Just in case
+        convert2 <- unique( convert2 ) 
+        
+        nConvert2 <- nrow( convert2 ) 
+        
+        #   Order the values, in case the do.call-lapply 
+        #   code above would mess the order
+        convert2 <- convert2[ order( convert2[, "from" ], 
+            decreasing = decreasing ), ]
+        
+        if( sCol ){ 
+            cl <- grDevices::colorRampPalette( 
+                colors = col, 
+                bias   = 1, 
+                space  = "Lab", 
+                alpha  = alpha ) 
+        }else{ 
+            cl <- grDevices::colorRampPalette( 
+                colors = fill, 
+                bias   = 1, 
+                space  = "Lab", 
+                alpha  = alpha ) 
+        }   
+        
+        convert2[, "col" ] <- cl( nConvert2 ) 
+        rm( cl )
+        
+        #   Add a pretty label will be necessary when 
+        #   creating the fill function that will convert 
+        #   numeric values into fill-colours (with gradients)
+        convert2[, "labels" ] <- .makeLabels( 
+            from     = convert2[, "from" ], 
+            to       = convert2[, "to" ], 
+            brackets = brackets, 
+            digits   = digits, 
+            nsmall   = nsmall, 
+            ... 
+        )   
+        
+        #   Internal labels are necessary to account for the 
+        #   that rounding may accidentally creates the same 
+        #   labels for two different intervals
+        convert2[, "internalLabels" ] <- .makeLabels( 
+            from     = convert2[, "from" ], 
+            to       = convert2[, "to" ], 
+            brackets = brackets, 
+            digits   = 16, 
+            nsmall   = 16, 
+            ... 
+        )   
+        
+        #   Make a new legend for each break point
+        attr( convert2, "legend" ) <- c( convert[, "from" ], 
+            convert[ nBreaks, "to" ] ) 
+        
+        isInfLeg <- is.infinite( attr( convert2, "legend" ) ) 
+        
+        attr( convert2, "legend" ) <- format( attr( convert2, "legend" ), 
+            digits = digits, nsmall = nsmall, ... ) 
+        
+        # TO DO: Can this be improved??
+        attr( convert2, "legend" )[ isInfLeg ] <- ""
+        
+        rm( isInfLeg ) 
+        
+        # convert2[, "groupLabels" ] <- paste0( brackets[1], 
+                # format( min( convert2[, "from" ] ), digits = digits, nsmall = nsmall, ... ), brackets[2], 
+                # format( max( convert2[, "to" ] ), digits = digits, nsmall = nsmall, ... ), brackets[3] ) 
+        
+    }   # end int != 1L
+    
+    # browser() 
+    
+    if( hasNA ){ 
+        convert  <- rbind( convert,  NA ) 
+        
+        nConvert <- nrow( convert ) 
+        convert[ nConvert, "col" ]            <- naCol 
+        convert[ nConvert, "labels" ]         <- naLeg 
+        convert[ nConvert, "internalLabels" ] <- naLeg 
+        convert[ nConvert, "groups" ]         <- nConvert 
+        
+        if( int != 1 ){ 
+            attr( convert2, "legend" ) <- c( attr( convert2, "legend" ), 
+                naLeg ) 
+        }   
+        
+        rm( nConvert )
+    }   
+    
+    
+    if( sCol | sFill ){ 
+        if( decreasing ){ 
+            out[[ "iCol" ]] <- out[[ "iFill" ]] <- rev( convert2[, "col" ] ) #  !isNA
+        }else{ 
+            out[[ "iCol" ]] <- out[[ "iFill" ]] <- convert2[, "col" ] #  !isNA
+        }   
+        
+        # # 2015-05-22 Attempt to fix a bug in colour order (see above)
+        # out[[ "iCol" ]] <- out[[ "iFill" ]] <- convert2[, "col" ] #  !isNA
+        
+        out[[ "iBreaks" ]] <- sort( 
+            unique( c( convert2[, "from" ], convert2[ nrow( convert2 ), "to" ] ) ), 
+            na.last = TRUE, 
+            decreasing = FALSE ) # This is not a mistake
+        
+        mi_x <- c( x, out[[ "iBreaks" ]] )
+        ma_x <- max( mi_x[ is.finite( mi_x ) ], na.rm = TRUE )
+        mi_x <- min( mi_x[ is.finite( mi_x ) ], na.rm = TRUE ) 
+        
+        out[[ "iBreaks" ]][ out[[ "iBreaks" ]] == -Inf ] <- mi_x - abs( mi_x )*2
+        out[[ "iBreaks" ]][ out[[ "iBreaks" ]] == +Inf ] <- ma_x + abs( ma_x )*2
+    }   
+    
+    
+    if( sCol ){ 
+        out[[ "col" ]] <- function(x){ 
+            
+            #   Find which rows are NA
+            rowIsNa <- apply( 
+                X      = convert[, c( "from", "to" ) ], 
+                MARGIN = 1, # rows
+                FUN    = function(x){ any( is.na( x ) ) } 
+            )   
+            
+            #   Find the breaks and labels (and remove NA's)
+            breaks <- c( 
+                convert[ !rowIsNa, "from" ], 
+                convert[ !rowIsNa, ][ nrow( convert[ !rowIsNa, ] ), "to" ] )
+            lab    <- convert[ !rowIsNa, "internalLabels" ]
+            
+            if( decreasing ){
+                breaks <- rev( breaks ) 
+                lab    <- rev( lab ) 
+            }   
+            
+            #   Add NA's again
+            if( any( rowIsNa ) ){
+                breaks <- c( breaks, convert[ rowIsNa, "from" ][ 1L ] )
+                lab    <- c( lab, convert[ rowIsNa, "internalLabels" ][ 1L ] )
+            }   
+            
+            #   Cast x into a data.frame
+            x <- data.frame( 
+                "values"         = x, 
+                "id"             = 1:length(x), 
+                "internalLabels" = as.character( cut( 
+                    x      = x, 
+                    breaks = breaks, 
+                    labels = lab, 
+                    right  = right, 
+                    include.lowest = include.lowest 
+                ) ), 
+                stringsAsFactors = FALSE ) 
+            
+            rm( breaks, lab ) 
+            
+            #   Merge with the colours
+            x <- merge( 
+                x     = x, 
+                y     = convert, # [,c( "values", "colours" ) ]
+                by    = "internalLabels", 
+                all.x = TRUE, 
+                sort  = FALSE 
+            )   
+            
+            x <- x[ order( x[, "id" ] ), ] 
+            
+            #   Add colour for missing values
+            x[ is.na( x[, "values" ] ), "col" ] <- naCol 
+            
+            # if( any( is.na( x[, "col" ] ) ) ){ 
+                # warning( "Some values in 'x' are new. Colour set to NA" ) 
+            # }   
+            
+            return( as.character( x[, "col" ] ) ) 
+        }   
+        
+        #   Give the function a clean environment
+        environment( out[[ "col" ]] ) <- new.env() 
+        
+        #   Populate the environment
+        assign( 
+            x     = "convert", 
+            value = convert2[, c( "labels", "internalLabels", "col", 
+                "from", "to", "groups" ) ], # , "groupLabels"
+            envir = environment( out[[ "col" ]] ) ) 
+        
+        assign( 
+            x     = "right",          
+            value = right,          
+            envir = environment( out[[ "col" ]] ) ) 
+        
+        assign( 
+            x     = "include.lowest", 
+            value = include.lowest, 
+            envir = environment( out[[ "col" ]] ) ) 
+        
+        assign( 
+            x     = "naCol",          
+            value = naCol,          
+            envir = environment( out[[ "col" ]] ) ) 
+        
+        assign(   # Part of bug fix for colour order
+            x     = "decreasing",          
+            value = decreasing,          
+            envir = environment( out[[ "col" ]] ) ) 
+        
+        #assign( "style",          1,              envir = environment( out[[ "col" ]] ) ) 
+        
+        #   Legend function
+        formals( out[[ "legend" ]] )[[ "col" ]] <- convert2[, "col" ] 
+        
+        #   Add the legend function
+        formals( out[[ "legend" ]] )[[ "legend" ]] <- convert2[, "labels" ] 
+    }   
+    
+    
+    if( sFill ){ 
+        out[[ "fill" ]] <- function(x){ 
+            
+            #   Find which rows are NA
+            rowIsNa <- apply( 
+                X      = convert[, c( "from", "to" ) ], 
+                MARGIN = 1, # rows
+                FUN    = function(x){ any( is.na( x ) ) } 
+            )   
+            
+            #   Find the breaks and labels (and remove NA's)
+            breaks <- c( 
+                convert[ !rowIsNa, "from" ], 
+                convert[ !rowIsNa, ][ nrow( convert[ !rowIsNa, ] ), "to" ] )
+            lab    <- convert[ !rowIsNa, "internalLabels" ]
+            
+            if( decreasing ){
+                breaks <- rev( breaks ) 
+                lab    <- rev( lab ) 
+            }   
+            
+            #   Add NA's again
+            if( any( rowIsNa ) ){
+                breaks <- c( breaks, convert[ rowIsNa, "from" ][ 1L ] )
+                lab    <- c( lab, convert[ rowIsNa, "internalLabels" ][ 1L ] )
+            }   
+            
+            #   Cast x into a data.frame
+            x <- data.frame( 
+                "values"         = x, 
+                "id"             = 1:length(x), 
+                "internalLabels" = as.character( cut( 
+                    x      = x, 
+                    breaks = breaks, 
+                    labels = lab, 
+                    right  = right, 
+                    include.lowest = include.lowest ) ), 
+                stringsAsFactors = FALSE ) 
+            
+            rm( breaks, lab ) 
+            
+            #   Merge with the colours
+            x <- merge( 
+                x     = x, 
+                y     = convert, # [,c( "values", "colours" ) ]
+                by    = "internalLabels", 
+                all.x = TRUE, 
+                sort  = FALSE 
+            )   
+            
+            x <- x[ order( x[, "id" ] ), ] 
+            
+            #   Add colour for missing values
+            x[ is.na( x[, "values" ] ), "col" ] <- naCol 
+            
+            # if( any( is.na( x[, "col" ] ) ) ){ 
+                # warning( "Some values in 'x' are new. Colour set to NA" ) 
+            # }   
+            
+            return( as.character( x[, "col" ] ) ) 
+        }   
+        
+        #   Give the function a clean environment
+        environment( out[[ "fill" ]] ) <- new.env() 
+        
+        #   Populate the environment
+        assign( 
+            x     = "convert", 
+            value = convert2[, c( "labels", "internalLabels", 
+                "col", "from", "to", "groups" ) ], # , "groupLabels"
+            envir = environment( out[[ "fill" ]] ) ) 
+        
+        assign( 
+            x     = "right",          
+            value = right,          
+            envir = environment( out[[ "fill" ]] ) ) 
+        
+        assign( 
+            x     = "include.lowest", 
+            value = include.lowest, 
+            envir = environment( out[[ "fill" ]] ) ) 
+        
+        assign( 
+            x     = "naCol",          
+            value = naCol,          
+            envir = environment( out[[ "fill" ]] ) ) 
+        
+        assign(   # Part of bug fix for colour order
+            x     = "decreasing",          
+            value = decreasing,          
+            envir = environment( out[[ "fill" ]] ) ) 
+        
+        # assign( "style", ifelse( int == 1, 1, 2 ), envir = environment( out[[ "legend" ]] ) ) 
+        
+        if( hasNA ){ 
+            convert2 <- rbind( convert2, NA ) 
+            
+            nconvert2 <- nrow( convert2 ) 
+            convert2[ nconvert2, "col" ]    <- naCol 
+            # convert2[ nconvert2, "labels" ] <- naLeg 
+            
+            convert2[ nconvert2, "groups" ] <- 
+                max( convert2[, "groups" ], na.rm = TRUE ) + 1  
+        }else{ 
+            convert2 <- convert2 
+        }   
+        
+        
+        #   Prepare the legend function
+        # if( decreasing ){ # Attempt to fix a bug. Not sure
+            # formals( out[[ "legend" ]] )[[ "fill" ]] <- rev( convert2[, "col" ] ) 
+        # }else{
+            # formals( out[[ "legend" ]] )[[ "fill" ]] <- convert2[, "col" ] 
+        # }   
+        
+        formals( out[[ "legend" ]] )[[ "fill" ]] <- convert2[, "col" ]
+        
+        if( int != 1L ){    # Otherwise drawn continuous legend
+            formals( out[[ "legend" ]] )[[ "groups" ]] <- convert2[, "groups" ] 
+            formals( out[[ "legend" ]] )[[ "legend" ]] <- attr( convert2, "legend" )
+            formals( out[[ "legend" ]] )[[ "style" ]]  <- 2 
+        }else{ 
+            formals( out[[ "legend" ]] )[[ "legend" ]] <- convert[, "labels" ] 
+        }   
+    }   
+    
+    formals( out[[ "legend" ]] )[[ "y.intersp" ]] <- y.intersp 
+    
+    out[[ "convert" ]]  <- convert
+    out[[ "convert2" ]] <- convert2
+    
+    # browser()
+    
+    return( out ) 
+}   
+
+
+
+#'@rdname setColourScale2-methods
+#'
+#'@method setColourScale2 matrix
+#'
+#'@export 
+#'
+setColourScale2.matrix <- function( 
+ x, 
+ ...
+){  #   x dimentions
+    dx <- dim( x )
+    
+    #   Matrix -> vector
+    x <- as.vector( x ) 
+    
+    #   
+    cs <- setColourScale2(
+        x     = x, 
+        naCol = NA, 
+        ...
+    )   
+    
+    
+    #   Find argument "decreasing"
+    decreasing <- list(...)[[ "decreasing" ]]
+    if( is.null( decreasing ) ){
+        decreasing <- formals( setColourScale2.default )[[ "decreasing" ]]
+    }   
+    
+    
+    #   New colour function
+    if( "col" %in% names(cs) ){ 
+        colOriginal <- cs[[ "col" ]] 
+        
+        cs[[ "col" ]] <- function(x){ 
+            return( matrix( 
+                data  = colOriginal( as.vector( x ) ), 
+                nrow  = dx[1L], 
+                ncol  = dx[2L], 
+                byrow = FALSE 
+            ) ) 
+        }   
+        
+        #   Clean and populate the function's environment
+        environment( cs[[ "col" ]] ) <-  new.env() 
+        assign( pos = environment( cs[[ "col" ]] ), x = "colOriginal", value = colOriginal,  ) 
+        assign( pos = environment( cs[[ "col" ]] ), x = "dx",          value = dx ) 
+        
+        convert <- as.list( environment( colOriginal ) )[[ "convert" ]]
+        convert <- convert[ order( convert[, "from" ], decreasing = decreasing ), ] 
+        
+        isNotNA <- (!is.na( convert[, "from" ] )) & 
+            (!is.na( convert[, "to" ] ))
+        
+        formals( cs[[ "legend" ]] )[[ "col" ]][ !isNotNA ] <- 
+            NA_character_ 
+    }   
+    
+    
+    #   New fill function
+    if( "fill" %in% names(cs) ){ 
+        fillOriginal <- cs[[ "fill" ]] 
+        
+        cs[[ "fill" ]] <- function(x){ 
+            return( matrix( 
+                data  = fillOriginal( as.vector( x ) ), 
+                nrow  = dx[1L], 
+                ncol  = dx[2L], 
+                byrow = FALSE 
+            ) ) 
+        }   
+        
+        #   Clean and populate the function's environment
+        environment( cs[[ "fill" ]] ) <-  new.env() 
+        assign( pos = environment( cs[[ "fill" ]] ), x = "fillOriginal", value = fillOriginal,  ) 
+        assign( pos = environment( cs[[ "fill" ]] ), x = "dx",           value = dx ) 
+        
+        convert <- as.list( environment( fillOriginal ) )[[ "convert" ]]
+        convert <- convert[ order( convert[, "from" ], decreasing = decreasing ), ] 
+        
+        isNotNA <- (!is.na( convert[, "from" ] )) & 
+            (!is.na( convert[, "to" ] ))
+        
+        formals( cs[[ "legend" ]] )[[ "fill" ]][ !isNotNA ] <- 
+            NA_character_ 
+    }   
+    
+    
+    return( cs )
+}   
+
+
+
+#'@rdname setColourScale2-methods
+#'
+#'@method setColourScale2 RasterLayer
+#'
+#'@export 
+#'
+setColourScale2.RasterLayer <- function( 
+ x, 
+ ...
+){  
+    if( !"raster" %in% rownames( installed.packages() ) ){ 
+        stop( "setColourScale2.RasterLayer requires the package 'raster' to be installed" ) 
+    }   
+    
+    
+    #   Load the package raster:
+    pkg <- "raster"
+    if( !require( pkg, character.only = TRUE ) ){ 
+        stop( "The package raster can not be loaded" )
+    }   
+    
+    
+    # hasNA <- any( is.na( values( x ) ) )
+    u <- get( "unique", "package:raster" )
+    x <- u( x )
+    
+    isna  <- get( "is.na", "package:raster" )
+    hasNa <- any( u( isna( x ) ) ) 
+    
+    if( any( u( isna( x ) ) ) ){ 
+        x <- c( x, NA )  
+    }   
+    
+    cs <- setColourScale2(
+        x = x, 
+        ...
+    )   
+    
+    
+    #   New colour function
+    if( "col" %in% names(cs) ){ 
+        cs[[ "col" ]] <- function(x){ 
+            stop( "Not implemented. Technically can't return a raster of colours (character strings)" )
+        }   
+    }   
+    
+    
+    #   New fill function
+    if( "fill" %in% names(cs) ){ 
+        cs[[ "fill" ]] <- function(x){ 
+            stop( "Not implemented. Technically can't return a raster of fill-colours (character strings)" )
+        }   
+    }   
+    
+    
+    return( cs )
+}   
+
+
+
