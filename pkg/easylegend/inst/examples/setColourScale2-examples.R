@@ -39,7 +39,7 @@ head( xyz )
 
 #   'Calibrate' the legend
 fg <- setFactorGraphics( x = xyz[, "g" ], pch = TRUE  )
-cs <- setColourScale2(     x = xyz[, "z" ], fill = TRUE ) 
+cs <- setColourScale2( x = xyz[, "z" ], fill = TRUE ) 
 
 #   Plot x y and g
 plot( x = xyz[, "x" ], y = xyz[, "y" ], col = cs$fill( xyz[, "z" ] ), 
@@ -56,15 +56,13 @@ rm( fg, cs )
 # X-Y PLOT , CUSTOMISED
 # =====================
 
-source( "D:/Users/julienm/Documents/_WORKS/_PROJECTS/r_packages/easylegend/pkg/easylegend/R/easylegend.R" )
-
 #   'Calibrate' the legend (1)
 fg <- setFactorGraphics( x = xyz[, "g" ], pch = 15:16 )
 
 fill <- hsv( h = 0.21, s = .8, v = seq( .2, .8, length.out = 5 ) )
 
 #   'Calibrate' the legend (2)
-cs  <- setColourScale2( x = xyz[, "z" ], fill = fill, int = 4, 
+cs  <- setColourRampScale( x = xyz[, "z" ], fill = fill, int = 4, 
     nsmall = 1, digits = 1 ) 
 
 #   Plot x y and g
@@ -79,27 +77,25 @@ rm( fg, cs, fill )
 
 
 
-# X-Y PLOT, MISSING Z-VALUES(with intermediate colors)
-# ====================================================
+# X-Y PLOT, MISSING Z-VALUES (with intermediate colours)
+# =====================================================
 
 xyz[ is.na(xyz[, "g" ]), "z" ] <- NA
 
-seq( 
-    from = max( xyz[, "z" ], na.rm = TRUE ), 
-    to   = min( xyz[, "z" ], na.rm = TRUE ), 
-    length.out = 5 ) 
-
 #   'Calibrate' the legend
-cs <- setColourScale2( x = xyz[, "z" ], fill = TRUE, int = 4 ) 
+cs <- setColourRampScale( x = xyz[, "z" ], int = 4 ) 
 
 #   Plot x y and g
 plot( x = xyz[, "x" ], y = xyz[, "y" ], col = cs$fill( xyz[, "z" ] ), 
     pch = 16, panel.first = grid() )
 
 #   Add legend
-cs$legend( x = "topleft",     title = "Z:",    bty = "n" )
+cs$legend( x = "topleft", title = "Z:",    bty = "n" )
 
 rm( cs )
+
+#   Note: See the same test without intermediate colours 
+#   below
 
 
 
@@ -121,8 +117,7 @@ rm( cs )
 # MATRIX, CUSTOMISED
 # ==================
 
-cs  <- setColourScale2( m, fill = TRUE, int = 4, nsmall = 1, 
-    digits = 1 ) 
+cs  <- setColourRampScale( m, int = 4, nsmall = 1, digits = 1 ) 
 
 par( "mar" = c( 5, 4, 4, 5 ) + .1 )
 
@@ -150,7 +145,7 @@ m <- matrix(
 m[ sample(1:nrow(m),3), sample(1:ncol(m),3) ] <- NA 
 
 
-cs  <- setColourScale2( m, fill = c( "darkred", "red", "orange", "lightyellow" ), 
+cs  <- setColourRampScale( m, fill = c( "darkred", "red", "orange", "lightyellow" ), 
     int = 4, breaks = breaks, digits = 0, nsmall = 0 ) 
 
 #   Standard plot: CAN'T SEE ANYTHING
@@ -170,7 +165,7 @@ rm( cs )
 # MORE TESTS
 # ==========
 
-# X-Y PLOT, MISSING Z-VALUES (without intermediate colors)
+# X-Y PLOT, MISSING Z-VALUES (without intermediate colours)
 # --------------------------------------------------------
 
 #   'Calibrate' the legend
@@ -190,13 +185,20 @@ rm( cs )
 # X-Y PLOT, MISSING Z-VALUES AND INFINTE BOUNDS
 # ---------------------------------------------
 
-#   'Calibrate' the legend
-fill <- hsv( h = 0.21, s = .8, v = seq( .8, .2, length.out = 5 ) ) 
+breaks <- quantile( 
+    x     = xyz[, "z" ], 
+    na.rm = TRUE, 
+    probs = seq( 1, 0, -.2 ) ) 
 
-breaks <- quantile( xyz[, "z" ], na.rm = TRUE, probs = seq( 1, 0, -.2 ) )
 breaks[ c(1,length(breaks)) ] <- c( +Inf, -Inf )
 
-cs <- setColourScale2( x = xyz[, "z" ], fill = fill, int = 4, 
+#   'Calibrate' the legend
+fill <- hsv( 
+    h = 0.21, 
+    s = .8, 
+    v = seq( .8, .2, length.out = length( breaks ) ) ) 
+
+cs <- setColourRampScale( x = xyz[, "z" ], fill = fill, int = 4, 
     breaks = breaks ) 
 
 #   Plot x y and g
@@ -215,8 +217,13 @@ rm( cs, fill, breaks )
 
 m <- matrix( data = rnorm(8*10), 8, 10 ) 
 
-cs  <- setColourScale2( m, fill = c("darkred","lightyellow"), 
-    int = 4, breaks = c(+Inf,0,-Inf), digits = 1, nsmall = 1 ) 
+cs  <- setColourRampScale( 
+    x      = m, 
+    fill   = c("darkred", "orange", "lightyellow"), 
+    int    = 4, 
+    breaks = c(+Inf,0,-Inf), 
+    digits = 1, 
+    nsmall = 1 ) 
 
 par( "mar" = c(5, 4, 4, 5) + .1 ) 
 
@@ -232,7 +239,7 @@ rm( cs )
 # MATRIX, CUSTOMISED (3 CATEGORIES)
 # ---------------------------------
 
-cs  <- setColourScale2( m, fill = c("darkred","orange","lightyellow"), 
+cs  <- setColourRampScale( m, fill = c("darkred","orange","lightyellow"), 
     int = 4, breaks = c(+Inf,1,-1,-Inf), digits = 1, nsmall = 1 ) 
 
 par( "mar" = c(5.1, 4.1, 4.1, 6.1) ) 
@@ -243,7 +250,7 @@ image( x = matrix2image( m ), col = cs[[ "iFill" ]],
 plotAnywhere( expr = cs$legend( x = "right", bty = "n" ) )
 
 #   Extra legend in reverse order
-cs2  <- setColourScale2( m, fill = c("lightyellow","orange","darkred"), 
+cs2  <- setColourRampScale( m, fill = c("lightyellow","orange","darkred"), 
     int = 4, breaks = c(-Inf,-1,+1,+Inf), digits = 1, nsmall = 1, 
     decreasing = FALSE ) 
 
@@ -259,7 +266,7 @@ rm( cs, cs2 )
 #   Add missing values
 m[ sample(1:nrow(m),3), sample(1:ncol(m),3) ] <- NA 
 
-cs  <- setColourScale2( m, fill = TRUE, int = 4, digits = 1, 
+cs  <- setColourRampScale( m, fill = TRUE, int = 4, digits = 1, 
     nsmall = 1 ) 
 
 par( "mar" = c(5.1, 4.1, 4.1, 6.1) ) 
