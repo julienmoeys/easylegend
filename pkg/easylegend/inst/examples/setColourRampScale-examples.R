@@ -1,1 +1,1 @@
-# See ?setColourScale2 for a series of examples
+# See ?setColourScale for a series of examples

@@ -6,9 +6,6 @@
 # | License: AGPL3, Affero General Public License version 3 
 # +-------------------------------------------------------------+
 
-# source( "D:/Users/julienm/Documents/_WORKS/_PROJECTS/r_packages/easylegend/pkg/easylegend/R/easylegend.R" )
-# rm( list = ls( all = TRUE ) )
-
 # http://www.statmethods.net/advgraphs/parameters.html
 
 
@@ -1151,6 +1148,8 @@ setColorScale <- function(
  x, 
  ...
 ){  
+    message( "easylegend::setColorScale will be deprecated in the future. Use setColourScale or setColourRampScale instead" )
+    
     UseMethod( "setColorScale" )
 }   
 
@@ -2210,12 +2209,12 @@ matrix2image <- function(x){
 
 
 
-# setColourScale2 ===========================================
+# setColourScale ===========================================
 
 #' Prepare colour scale and legend (col, fill) from continuous-numeric data.
 #'
 #' Prepare colour scale and legend (col, fill) from 
-#'  continuous-numeric data. \code{setColourScale2} is a 
+#'  continuous-numeric data. \code{setColourScale} is a 
 #'  partial rewriting of \code{\link{setColorScale}}.
 #'
 #'
@@ -2310,6 +2309,14 @@ matrix2image <- function(x){
 #'   on how \code{nBreaks} and \code{col} or \code{fill} 
 #'  are related.
 #'
+#'@param hideMinMax
+#'  Vector of two logical value. If \code{TRUE}, the min or 
+#'  the max values in breaks (or both) will be replaced by 
+#'  \code{> x} or \code{< y} where \code{x} is the 2nd highest 
+#'  value in \code{breaks} and \code{y} is the 2nd smallest 
+#'  value in \code{breaks}. \code{hideMinMax[1L]} is for the 
+#'  min value and \code{hideMinMax[2L]} is for the max-value.
+#'
 #'@param \dots
 #'  Additional parameters passed to specific methods.
 #'
@@ -2324,29 +2331,29 @@ matrix2image <- function(x){
 #'  \code{\link[graphics]{legend}} function.
 #'
 #'
-#'@example inst/examples/setColourScale2-examples.R
+#'@example inst/examples/setColourScale-examples.R
 #'
 #'@importFrom grDevices colorRampPalette
 #'
-#'@rdname setColourScale2-methods
+#'@rdname setColourScale-methods
 #'
 #'@export 
 #'
-setColourScale2 <- function(
+setColourScale <- function(
  x, 
  ...
 ){  
-    UseMethod( "setColourScale2" )
+    UseMethod( "setColourScale" )
 }   
 
 
-#'@rdname setColourScale2-methods
+#'@rdname setColourScale-methods
 #'
-#'@method setColourScale2 default
+#'@method setColourScale default
 #'
 #'@export 
 #'
-setColourScale2.default <- function( 
+setColourScale.default <- function( 
     x, 
     col      = FALSE, 
     fill     = FALSE, 
@@ -2362,7 +2369,8 @@ setColourScale2.default <- function(
     nsmall   = 3L,          # see format()
     decreasing = TRUE, 
     y.intersp = 1.5, 
-    nBreaks = 6L, # So 5 colors
+    nBreaks = 6L, # So 5 colours
+    hideMinMax = c( FALSE, FALSE ), 
     # alpha = FALSE, 
     ...      # passed to format
 ){  
@@ -2399,12 +2407,12 @@ setColourScale2.default <- function(
             ) ) 
         }   
         
-        if( length( breaks[ is.finite( breaks ) ] ) < 1L ){
-            stop( sprintf( 
-                "The number of finite breaks must be at least 1 (now %s)", 
-                length( breaks[ is.finite( breaks ) ] ) 
-            ) ) 
-        }   
+        # if( length( breaks[ is.finite( breaks ) ] ) < 1L ){
+            # stop( sprintf( 
+                # "The number of finite breaks must be at least 1 (now %s)", 
+                # length( breaks[ is.finite( breaks ) ] ) 
+            # ) ) 
+        # }   
         
         nBreaks <- length( breaks ) 
     }else{
@@ -2524,48 +2532,53 @@ setColourScale2.default <- function(
         };  rm( test )
         
         
-        #   breaksSanitized is a copy of breaks where infinite values
-        #   will be removed. Useful for estimating intermediate
-        #   steps in the breaks
-        breaksSanitized <- breaks
-        
-        #   Test for infinite values
         if( any( is.infinite( breaks ) ) ){
-            #   Calculate the maximum non-infinite difference 
-            #   between the breaks (absolute value)
-            maxAbsDiff <- abs( diff( breaks ) ) 
-            maxAbsDiff <- maxAbsDiff[ is.finite( maxAbsDiff ) ] 
-            
-            if( length( maxAbsDiff ) == 0 ){
-                #   Case: less than 2 finite breaks
-                maxAbsDiff <- 1
-            }else{
-                #   Case: at least 2 finite breaks
-                maxAbsDiff <- max( maxAbsDiff )
-            }   
-            
-            if( decreasing ){
-                if( breaks[ 1L ] == +Inf ){
-                    # breaksSanitized[ 1L ] <- max( breaks[ is.finite( breaks ) ] ) + maxAbsDiff 
-                    breaksSanitized[ 1L ] <- +.Machine[[ "double.xmax" ]] 
-                }   
-                
-                if( breaks[ length( breaks ) ] == -Inf ){
-                    # breaksSanitized[ length( breaks ) ] <- min( breaks[ is.finite( breaks ) ] ) - maxAbsDiff 
-                    breaksSanitized[ length( breaks ) ] <- -.Machine[[ "double.xmax" ]] 
-                }   
-            }else{ # increasing
-                if( breaks[ 1L ] == -Inf ){
-                    # breaksSanitized[ 1L ] <- min( breaks[ is.finite( breaks ) ] ) - maxAbsDiff 
-                    breaksSanitized[ 1L ] <- -.Machine[[ "double.xmax" ]] 
-                }   
-                
-                if( breaks[ length( breaks ) ] == +Inf ){
-                    # breaksSanitized[ length( breaks ) ] <- max( breaks[ is.finite( breaks ) ] ) + maxAbsDiff 
-                    breaksSanitized[ length( breaks ) ] <- +.Machine[[ "double.xmax" ]] 
-                }   
-            }   
+            stop( "Some values in breaks are infinite. Replace them by a high or low value and set 'hideMinMax' instead." )
         }   
+        
+        
+        # #   breaksSanitized is a copy of breaks where infinite values
+        # #   will be removed. Useful for estimating intermediate
+        # #   steps in the breaks
+        # breaksSanitized <- breaks
+        
+        # #   Test for infinite values
+        # if( any( is.infinite( breaks ) ) ){
+            # #   Calculate the maximum non-infinite difference 
+            # #   between the breaks (absolute value)
+            # maxAbsDiff <- abs( diff( breaks ) ) 
+            # maxAbsDiff <- maxAbsDiff[ is.finite( maxAbsDiff ) ] 
+            
+            # if( length( maxAbsDiff ) == 0 ){
+                # #   Case: less than 2 finite breaks
+                # maxAbsDiff <- 1
+            # }else{
+                # #   Case: at least 2 finite breaks
+                # maxAbsDiff <- max( maxAbsDiff )
+            # }   
+            
+            # if( decreasing ){
+                # if( breaks[ 1L ] == +Inf ){
+                    # # breaksSanitized[ 1L ] <- max( breaks[ is.finite( breaks ) ] ) + maxAbsDiff 
+                    # breaksSanitized[ 1L ] <- +.Machine[[ "double.xmax" ]] 
+                # }   
+                
+                # if( breaks[ length( breaks ) ] == -Inf ){
+                    # # breaksSanitized[ length( breaks ) ] <- min( breaks[ is.finite( breaks ) ] ) - maxAbsDiff 
+                    # breaksSanitized[ length( breaks ) ] <- -.Machine[[ "double.xmax" ]] 
+                # }   
+            # }else{ # increasing
+                # if( breaks[ 1L ] == -Inf ){
+                    # # breaksSanitized[ 1L ] <- min( breaks[ is.finite( breaks ) ] ) - maxAbsDiff 
+                    # breaksSanitized[ 1L ] <- -.Machine[[ "double.xmax" ]] 
+                # }   
+                
+                # if( breaks[ length( breaks ) ] == +Inf ){
+                    # # breaksSanitized[ length( breaks ) ] <- max( breaks[ is.finite( breaks ) ] ) + maxAbsDiff 
+                    # breaksSanitized[ length( breaks ) ] <- +.Machine[[ "double.xmax" ]] 
+                # }   
+            # }   
+        # }   
         
     }   
     
@@ -2595,7 +2608,7 @@ setColourScale2.default <- function(
                                 # style != 1L means with intermediate colours
             
         ){  
-            if( horiz ){ stop( "'horiz' = TRUE not supported in easylegend::setColourScale2" ) }
+            if( horiz ){ stop( "'horiz' = TRUE not supported in easylegend::setColourScale" ) }
             
             #   Prepare a list (of arguments) that will be passed 
             #   to the function legend using do.call()
@@ -2658,9 +2671,10 @@ setColourScale2.default <- function(
     .makeLabels <- function( 
         from, 
         to, 
-        brackets = brackets, 
-        digits   = digits, 
-        nsmall   = nsmall, 
+        hideMinMax = hideMinMax, 
+        brackets   = brackets, 
+        digits     = digits, 
+        nsmall     = nsmall, 
         ... 
     ){  
         labs <- paste0( 
@@ -2670,40 +2684,101 @@ setColourScale2.default <- function(
             format( to,   digits = digits, nsmall = nsmall, ... ), 
             brackets[3] ) 
         
-        if( any( testInf <- from == +Inf ) ){ 
-            labs[ testInf ] <- sprintf( 
-                "> %s", 
-                format( to[ testInf ], digits = digits, nsmall = nsmall, ... ) )       
+        if( hideMinMax[ 1L ] ){ # Case: The min value should be hidden
+            
+            testFrom <- from == min( c( from, to ) )
+            
+            if( any( testFrom ) ){
+                labs[ testFrom ] <- sprintf( 
+                    "< %s", 
+                    format( 
+                        to[ testFrom ], 
+                        digits = digits, 
+                        nsmall = nsmall, 
+                        ... 
+                    ) 
+                )    
+            };  rm( testFrom ) 
+            
+            testTo <- to == min( c( from, to ) )
+            
+            if( any( testTo ) ){
+                labs[ testTo ] <- sprintf( 
+                    "< %s", 
+                    format( 
+                        from[ testTo ], 
+                        digits = digits, 
+                        nsmall = nsmall, 
+                        ... 
+                    ) 
+                )    
+            };  rm( testTo ) 
         }   
         
-        if( any( testInf <- from == -Inf ) ){ 
-            labs[ testInf ] <- sprintf( 
-                "< %s", 
-                format( to[ testInf ], digits = digits, nsmall = nsmall, ... ) )    
+        if( hideMinMax[ 2L ] ){ # Case: The max value should be hidden
+            testFrom <- from == max( c( from, to ) )
+            if( any( testFrom ) ){
+                labs[ testFrom ] <- sprintf( 
+                    "> %s", 
+                    format( 
+                        to[ testFrom ], 
+                        digits = digits, 
+                        nsmall = nsmall, 
+                        ... 
+                    )   
+                )    
+            };  rm( testFrom ) 
+            
+            
+            testTo <- to == max( c( from, to ) )
+            if( any( testTo ) ){
+                labs[ testTo ] <- sprintf( 
+                    "> %s", 
+                    format( 
+                        from[ testTo ], 
+                        digits = digits, 
+                        nsmall = nsmall, 
+                        ... 
+                    )   
+                )    
+            };  rm( testTo ) 
         }   
         
-        if( any( testInf <- to == +Inf ) ){ 
-            labs[ testInf ] <- sprintf( 
-                "> %s", 
-                format( from[ testInf ], digits = digits, nsmall = nsmall, ... ) )    
-        }   
+        # if( any( testInf <- from == +Inf ) ){ 
+            # labs[ testInf ] <- sprintf( 
+                # "> %s", 
+                # format( to[ testInf ], digits = digits, nsmall = nsmall, ... ) )       
+        # }   
         
-        if( any( testInf <- to == -Inf ) ){ 
-            labs[ testInf ] <- sprintf( 
-                "< %s", 
-                format( from[ testInf ], digits = digits, nsmall = nsmall, ... ) )    
-        }   
+        # if( any( testInf <- from == -Inf ) ){ 
+            # labs[ testInf ] <- sprintf( 
+                # "< %s", 
+                # format( to[ testInf ], digits = digits, nsmall = nsmall, ... ) )    
+        # }   
+        
+        # if( any( testInf <- to == +Inf ) ){ 
+            # labs[ testInf ] <- sprintf( 
+                # "> %s", 
+                # format( from[ testInf ], digits = digits, nsmall = nsmall, ... ) )    
+        # }   
+        
+        # if( any( testInf <- to == -Inf ) ){ 
+            # labs[ testInf ] <- sprintf( 
+                # "< %s", 
+                # format( from[ testInf ], digits = digits, nsmall = nsmall, ... ) )    
+        # }   
         
         return( labs )
     }   
     
     if( is.null( labels ) ){ 
         convert[, "labels" ] <- .makeLabels( 
-            from     = convert[, "from" ], 
-            to       = convert[, "to" ], 
-            brackets = brackets, 
-            digits   = digits, 
-            nsmall   = nsmall, 
+            from       = convert[, "from" ], 
+            to         = convert[, "to" ], 
+            hideMinMax = hideMinMax, 
+            brackets   = brackets, 
+            digits     = digits, 
+            nsmall     = nsmall, 
             ... 
         )   
         
@@ -2723,11 +2798,12 @@ setColourScale2.default <- function(
     #   that rounding may accidentally creates the same 
     #   labels for two different intervals
     convert[, "internalLabels" ] <- .makeLabels( 
-        from     = convert[, "from" ], 
-        to       = convert[, "to" ], 
-        brackets = brackets, 
-        digits   = 16, 
-        nsmall   = 16, 
+        from       = convert[, "from" ], 
+        to         = convert[, "to" ], 
+        hideMinMax = c( FALSE, FALSE ), 
+        brackets   = brackets, 
+        digits     = 16, 
+        nsmall     = 16, 
         ... 
     )   
     
@@ -2775,8 +2851,8 @@ setColourScale2.default <- function(
         # ma_x <- max( mi_x[ is.finite( mi_x ) ], na.rm = TRUE )
         # mi_x <- min( mi_x[ is.finite( mi_x ) ], na.rm = TRUE ) 
         
-        out[[ "iBreaks" ]][ out[[ "iBreaks" ]] == -Inf ] <- -.Machine[[ "double.xmax" ]] 
-        out[[ "iBreaks" ]][ out[[ "iBreaks" ]] == +Inf ] <- +.Machine[[ "double.xmax" ]]
+        # out[[ "iBreaks" ]][ out[[ "iBreaks" ]] == -Inf ] <- -.Machine[[ "double.xmax" ]] 
+        # out[[ "iBreaks" ]][ out[[ "iBreaks" ]] == +Inf ] <- +.Machine[[ "double.xmax" ]]
     }   
     
     
@@ -2801,11 +2877,31 @@ setColourScale2.default <- function(
                 lab    <- rev( lab ) 
             }   
             
-            #   Add NA's again
-            if( any( rowIsNa ) ){
-                breaks <- c( breaks, convert[ rowIsNa, "from" ][ 1L ] )
-                lab    <- c( lab, convert[ rowIsNa, "internalLabels" ][ 1L ] )
+            
+            #   Test that no values in x is outside the 'breaks'
+            #   bounds
+            if( any( testHigh <- na.omit( x ) > max( breaks ) ) ){
+                warning( sprintf( 
+                    "Some values in x (%s) are higher than max(breaks). They may be displayed wrongly (or as NA)", 
+                    sum( testHigh )
+                ) ) 
             }   
+            
+            if( any( testLow <- na.omit( x ) < min( breaks ) ) ){
+                warning( sprintf( 
+                    "Some values in x (%s) are lower than min(breaks). They may be displayed wrongly (or as NA)", 
+                    sum( testLow )
+                ) ) 
+            }   
+            rm( testHigh, testLow )
+            
+            
+            # #   Add NA's again # # Handled internally by cut()
+            # if( any( rowIsNa ) ){
+                # breaks <- c( breaks, convert[ rowIsNa, "from" ][ 1L ] )
+                # lab    <- c( lab, convert[ rowIsNa, "internalLabels" ][ 1L ] )
+            # }   
+            
             
             #   Cast x into a data.frame
             x <- data.frame( 
@@ -2901,6 +2997,25 @@ setColourScale2.default <- function(
                 breaks <- rev( breaks ) 
                 lab    <- rev( lab ) 
             }   
+            
+            
+            #   Test that no values in x is outside the 'breaks'
+            #   bounds
+            if( any( testHigh <- na.omit( x ) > max( breaks ) ) ){
+                warning( sprintf( 
+                    "Some values in x (%s) are higher than max(breaks). They may be displayed wrongly (or as NA)", 
+                    sum( testHigh )
+                ) ) 
+            }   
+            
+            if( any( testLow <- na.omit( x ) < min( breaks ) ) ){
+                warning( sprintf( 
+                    "Some values in x (%s) are lower than min(breaks). They may be displayed wrongly (or as NA)", 
+                    sum( testLow )
+                ) ) 
+            }   
+            rm( testHigh, testLow )
+            
             
             # #   Add NA's again # # NO! cut handles NAs internally
             # if( any( rowIsNa ) ){
@@ -3005,13 +3120,13 @@ setColourScale2.default <- function(
 
 
 
-#'@rdname setColourScale2-methods
+#'@rdname setColourScale-methods
 #'
-#'@method setColourScale2 matrix
+#'@method setColourScale matrix
 #'
 #'@export 
 #'
-setColourScale2.matrix <- function( 
+setColourScale.matrix <- function( 
  x, 
  ...
 ){  #   x dimentions
@@ -3021,7 +3136,7 @@ setColourScale2.matrix <- function(
     x <- as.vector( x ) 
     
     #   
-    cs <- setColourScale2(
+    cs <- setColourScale(
         x     = x, 
         naCol = NA, 
         ...
@@ -3031,7 +3146,7 @@ setColourScale2.matrix <- function(
     #   Find argument "decreasing"
     decreasing <- list(...)[[ "decreasing" ]]
     if( is.null( decreasing ) ){
-        decreasing <- formals( setColourScale2.default )[[ "decreasing" ]]
+        decreasing <- formals( setColourScale.default )[[ "decreasing" ]]
     }   
     
     
@@ -3098,18 +3213,18 @@ setColourScale2.matrix <- function(
 
 
 
-#'@rdname setColourScale2-methods
+#'@rdname setColourScale-methods
 #'
-#'@method setColourScale2 RasterLayer
+#'@method setColourScale RasterLayer
 #'
 #'@export 
 #'
-setColourScale2.RasterLayer <- function( 
+setColourScale.RasterLayer <- function( 
  x, 
  ...
 ){  
     if( !"raster" %in% rownames( installed.packages() ) ){ 
-        stop( "setColourScale2.RasterLayer requires the package 'raster' to be installed" ) 
+        stop( "setColourScale.RasterLayer requires the package 'raster' to be installed" ) 
     }   
     
     
@@ -3131,7 +3246,7 @@ setColourScale2.RasterLayer <- function(
         x <- c( x, NA )  
     }   
     
-    cs <- setColourScale2(
+    cs <- setColourScale(
         x = x, 
         ...
     )   
@@ -3294,11 +3409,11 @@ setColourScale2.RasterLayer <- function(
 #' Prepare colour scale (ramp) and legend (fill) from continuous-numeric data.
 #'
 #' Prepare colour scale (ramp) and legend (fill) from 
-#'  continuous-numeric data. \code{setColourScale2} is a 
+#'  continuous-numeric data. \code{setColourScale} is a 
 #'  partial rewriting of \code{\link{setColorScale}}.
 #'
 #'
-#'@seealso \code{\link{setColourScale2}}, 
+#'@seealso \code{\link{setColourScale}}, 
 #'  \code{\link{setFactorGraphics}} and 
 #'  \code{\link[grDevices]{colorRampPalette}}.
 #'
@@ -3316,7 +3431,7 @@ setColourScale2.RasterLayer <- function(
 #'  See \code{\link[base]{cut}}. There must be as many breaks 
 #'  as colours (i.e. \code{length(fill) == length(breaks)}; 
 #'  Notice that this is different from 
-#'  \code{\link{setColourScale2}}). If \code{NULL}, 
+#'  \code{\link{setColourScale}}). If \code{NULL}, 
 #'  \code{nBreaks} breaks will be generated internally (see 
 #'  below). \code{breaks} should be ordered (no \code{NA}), 
 #'  with no replica, and consistent with the argument 
@@ -3388,6 +3503,14 @@ setColourScale2.RasterLayer <- function(
 #'  Single logical value. Passed internally to 
 #'  \code{\link[grDevices]{colorRampPalette}}
 #'
+#'@param hideMinMax
+#'  Vector of two logical value. If \code{TRUE}, the min or 
+#'  the max values in breaks (or both) will be replaced by 
+#'  \code{> x} or \code{< y} where \code{x} is the 2nd highest 
+#'  value in \code{breaks} and \code{y} is the 2nd smallest 
+#'  value in \code{breaks}. \code{hideMinMax[1L]} is for the 
+#'  min value and \code{hideMinMax[2L]} is for the max-value.
+#'
 #'@param \dots
 #'  Additional parameters passed to specific methods.
 #'
@@ -3441,6 +3564,7 @@ setColourRampScale.default <- function(
     y.intersp = 1.5, 
     nBreaks = 5L, 
     alpha = FALSE, 
+    hideMinMax = c( FALSE, FALSE ), 
     ...      # passed to format
 ){  
     #   Reset 'nBreak's if 'breaks' is supplied and check that 
@@ -3458,12 +3582,12 @@ setColourRampScale.default <- function(
             ) ) 
         }   
         
-        if( length( breaks[ is.finite( breaks ) ] ) < 1L ){
-            stop( sprintf( 
-                "The number of finite breaks must be at least 1 (now %s)", 
-                length( breaks[ is.finite( breaks ) ] ) 
-            ) ) 
-        }   
+        # if( length( breaks[ is.finite( breaks ) ] ) < 1L ){
+            # stop( sprintf( 
+                # "The number of finite breaks must be at least 1 (now %s)", 
+                # length( breaks[ is.finite( breaks ) ] ) 
+            # ) ) 
+        # }   
         
         nBreaks <- length( breaks ) 
     }else{
@@ -3536,7 +3660,7 @@ setColourRampScale.default <- function(
                 length.out = nBreaks ) 
         }   
         
-        breaksSanitized <- breaks
+        # breaksSanitized <- breaks
     }else{ 
         # Test that the breaks are sorted correctly
         test <- sort( breaks, na.last = TRUE, decreasing = decreasing )
@@ -3551,47 +3675,52 @@ setColourRampScale.default <- function(
         rm( test )
         
         
-        #   breaks2 is a copy of breaks where infinite values
-        #   will be removed. Usefull for estimating intermediate
-        #   steps in the breaks
-        breaksSanitized <- breaks
-        
-        #   Test for infinite values
         if( any( is.infinite( breaks ) ) ){
-            #   Calculate the maximum non-infinite difference 
-            #   between the breaks (absolute value)
-            maxAbsDiff <- abs( diff( breaks ) ) 
-            maxAbsDiff <- maxAbsDiff[ is.finite( maxAbsDiff ) ] 
-            if( length( maxAbsDiff ) == 0 ){
-                #   Case: less than 2 finite breaks
-                maxAbsDiff <- 1
-            }else{
-                #   Case: at least 2 finite breaks
-                maxAbsDiff <- max( maxAbsDiff )
-            }   
-            
-            if( decreasing ){
-                if( breaks[ 1L ] == +Inf ){
-                    # breaksSanitized[ 1L ] <- max( breaks[ is.finite( breaks ) ] ) + maxAbsDiff 
-                    breaksSanitized[ 1L ] <- +.Machine[[ "double.xmax" ]] 
-                }   
-                
-                if( breaks[ length( breaks ) ] == -Inf ){
-                    # breaksSanitized[ length( breaks ) ] <- min( breaks[ is.finite( breaks ) ] ) - maxAbsDiff 
-                    breaksSanitized[ length( breaks ) ] <- -.Machine[[ "double.xmax" ]]
-                }   
-            }else{ # increasing
-                if( breaks[ 1L ] == -Inf ){
-                    # breaksSanitized[ 1L ] <- min( breaks[ is.finite( breaks ) ] ) - maxAbsDiff 
-                    breaksSanitized[ 1L ] <- -.Machine[[ "double.xmax" ]] 
-                }   
-                
-                if( breaks[ length( breaks ) ] == +Inf ){
-                    # breaksSanitized[ length( breaks ) ] <- max( breaks[ is.finite( breaks ) ] ) + maxAbsDiff 
-                    breaksSanitized[ length( breaks ) ] <- +.Machine[[ "double.xmax" ]] 
-                }   
-            }   
+            stop( "Some values in breaks are infinite. Replace them by a high or low value and set 'hideMinMax' instead." )
         }   
+        
+        
+        # #   breaks2 is a copy of breaks where infinite values
+        # #   will be removed. Usefull for estimating intermediate
+        # #   steps in the breaks
+        # breaksSanitized <- breaks
+        
+        # #   Test for infinite values
+        # if( any( is.infinite( breaks ) ) ){
+            # #   Calculate the maximum non-infinite difference 
+            # #   between the breaks (absolute value)
+            # maxAbsDiff <- abs( diff( breaks ) ) 
+            # maxAbsDiff <- maxAbsDiff[ is.finite( maxAbsDiff ) ] 
+            # if( length( maxAbsDiff ) == 0 ){
+                # #   Case: less than 2 finite breaks
+                # maxAbsDiff <- 1
+            # }else{
+                # #   Case: at least 2 finite breaks
+                # maxAbsDiff <- max( maxAbsDiff )
+            # }   
+            
+            # if( decreasing ){
+                # if( breaks[ 1L ] == +Inf ){
+                    # # breaksSanitized[ 1L ] <- max( breaks[ is.finite( breaks ) ] ) + maxAbsDiff 
+                    # breaksSanitized[ 1L ] <- +.Machine[[ "double.xmax" ]] 
+                # }   
+                
+                # if( breaks[ length( breaks ) ] == -Inf ){
+                    # # breaksSanitized[ length( breaks ) ] <- min( breaks[ is.finite( breaks ) ] ) - maxAbsDiff 
+                    # breaksSanitized[ length( breaks ) ] <- -.Machine[[ "double.xmax" ]]
+                # }   
+            # }else{ # increasing
+                # if( breaks[ 1L ] == -Inf ){
+                    # # breaksSanitized[ 1L ] <- min( breaks[ is.finite( breaks ) ] ) - maxAbsDiff 
+                    # breaksSanitized[ 1L ] <- -.Machine[[ "double.xmax" ]] 
+                # }   
+                
+                # if( breaks[ length( breaks ) ] == +Inf ){
+                    # # breaksSanitized[ length( breaks ) ] <- max( breaks[ is.finite( breaks ) ] ) + maxAbsDiff 
+                    # breaksSanitized[ length( breaks ) ] <- +.Machine[[ "double.xmax" ]] 
+                # }   
+            # }   
+        # }   
         
     }   
     
@@ -3738,9 +3867,10 @@ setColourRampScale.default <- function(
     .makeLabels <- function( 
         from, 
         to, 
-        brackets = brackets, 
-        digits   = digits, 
-        nsmall   = nsmall, 
+        hideMinMax = hideMinMax, 
+        brackets   = brackets, 
+        digits     = digits, 
+        nsmall     = nsmall, 
         ... 
     ){  
         labs <- paste0( 
@@ -3750,29 +3880,89 @@ setColourRampScale.default <- function(
             format( to,   digits = digits, nsmall = nsmall, ... ), 
             brackets[3] ) 
         
-        if( any( testInf <- from == +Inf ) ){ 
-            labs[ testInf ] <- sprintf( 
-                "> %s", 
-                format( to[ testInf ], digits = digits, nsmall = nsmall, ... ) )       
+        if( hideMinMax[ 1L ] ){ # Case: The min value should be hidden
+            
+            testFrom <- from == min( c( from, to ) )
+            
+            if( any( testFrom ) ){
+                labs[ testFrom ] <- sprintf( 
+                    "< %s", 
+                    format( 
+                        to[ testFrom ], 
+                        digits = digits, 
+                        nsmall = nsmall, 
+                        ... 
+                    ) 
+                )    
+            };  rm( testFrom ) 
+            
+            testTo <- to == min( c( from, to ) )
+            
+            if( any( testTo ) ){
+                labs[ testTo ] <- sprintf( 
+                    "< %s", 
+                    format( 
+                        from[ testTo ], 
+                        digits = digits, 
+                        nsmall = nsmall, 
+                        ... 
+                    ) 
+                )    
+            };  rm( testTo ) 
         }   
         
-        if( any( testInf <- from == -Inf ) ){ 
-            labs[ testInf ] <- sprintf( 
-                "< %s", 
-                format( to[ testInf ], digits = digits, nsmall = nsmall, ... ) )    
+        if( hideMinMax[ 2L ] ){ # Case: The max value should be hidden
+            testFrom <- from == max( c( from, to ) )
+            if( any( testFrom ) ){
+                labs[ testFrom ] <- sprintf( 
+                    "> %s", 
+                    format( 
+                        to[ testFrom ], 
+                        digits = digits, 
+                        nsmall = nsmall, 
+                        ... 
+                    )   
+                )    
+            };  rm( testFrom ) 
+            
+            
+            testTo <- to == max( c( from, to ) )
+            if( any( testTo ) ){
+                labs[ testTo ] <- sprintf( 
+                    "> %s", 
+                    format( 
+                        from[ testTo ], 
+                        digits = digits, 
+                        nsmall = nsmall, 
+                        ... 
+                    )   
+                )    
+            };  rm( testTo ) 
         }   
         
-        if( any( testInf <- to == +Inf ) ){ 
-            labs[ testInf ] <- sprintf( 
-                "> %s", 
-                format( from[ testInf ], digits = digits, nsmall = nsmall, ... ) )    
-        }   
+        # if( any( testInf <- from == +Inf ) ){ 
+            # labs[ testInf ] <- sprintf( 
+                # "> %s", 
+                # format( to[ testInf ], digits = digits, nsmall = nsmall, ... ) )       
+        # }   
         
-        if( any( testInf <- to == -Inf ) ){ 
-            labs[ testInf ] <- sprintf( 
-                "< %s", 
-                format( from[ testInf ], digits = digits, nsmall = nsmall, ... ) )    
-        }   
+        # if( any( testInf <- from == -Inf ) ){ 
+            # labs[ testInf ] <- sprintf( 
+                # "< %s", 
+                # format( to[ testInf ], digits = digits, nsmall = nsmall, ... ) )    
+        # }   
+        
+        # if( any( testInf <- to == +Inf ) ){ 
+            # labs[ testInf ] <- sprintf( 
+                # "> %s", 
+                # format( from[ testInf ], digits = digits, nsmall = nsmall, ... ) )    
+        # }   
+        
+        # if( any( testInf <- to == -Inf ) ){ 
+            # labs[ testInf ] <- sprintf( 
+                # "< %s", 
+                # format( from[ testInf ], digits = digits, nsmall = nsmall, ... ) )    
+        # }   
         
         return( labs )
     }   
@@ -3855,8 +4045,8 @@ setColourRampScale.default <- function(
                 #   Define the breaks in the group
                 #   One more breaks than for the other groups
                 newBreaks <- seq( 
-                    from       = breaksSanitized[ i ], 
-                    to         = breaksSanitized[ i + 1L ], 
+                    from       = breaks[ i ],       # breaksSanitized[ i ], 
+                    to         = breaks[ i + 1L ],  # breaksSanitized[ i + 1L ], 
                     length.out = nrow(out)+1L ) 
                 
                 #   Define the from-to ranges for each step 
@@ -3876,8 +4066,8 @@ setColourRampScale.default <- function(
             }else{                      # Not the last group
                 #   Define the breaks in the group
                 newBreaks <- seq( 
-                    from       = breaksSanitized[ i ], 
-                    to         = breaksSanitized[ i + 1L ], 
+                    from       = breaks[ i ],       # breaksSanitized[ i ], 
+                    to         = breaks[ i + 1L ],  # breaksSanitized[ i + 1L ], 
                     length.out = nrow(out)+1L ) 
                 
                 #   Define the from-to ranges for each step 
@@ -3920,11 +4110,12 @@ setColourRampScale.default <- function(
     #   creating the fill function that will convert 
     #   numeric values into fill-colours (with gradients)
     convert[, "labels" ] <- .makeLabels( 
-        from     = convert[, "from" ], 
-        to       = convert[, "to" ], 
-        brackets = brackets, 
-        digits   = digits, 
-        nsmall   = nsmall, 
+        from       = convert[, "from" ], 
+        to         = convert[, "to" ], 
+        hideMinMax = hideMinMax, 
+        brackets   = brackets, 
+        digits     = digits, 
+        nsmall     = nsmall, 
         ... 
     )   
     
@@ -3932,11 +4123,12 @@ setColourRampScale.default <- function(
     #   that rounding may accidentally creates the same 
     #   labels for two different intervals
     convert[, "internalLabels" ] <- .makeLabels( 
-        from     = convert[, "from" ], 
-        to       = convert[, "to" ], 
-        brackets = brackets, 
-        digits   = 16, # See print.default() to see why this is relevant
-        nsmall   = 16, 
+        from       = convert[, "from" ], 
+        to         = convert[, "to" ], 
+        hideMinMax = c( FALSE, FALSE ), 
+        brackets   = brackets, 
+        digits     = 16, # See print.default() to see why this is relevant
+        nsmall     = 16, 
         ... 
     )   
     
@@ -3947,19 +4139,28 @@ setColourRampScale.default <- function(
     attr( convert, "legend" ) <- breaks 
     #   Note: eventual NAs will be added below
     
-    isInfLeg <- is.infinite( attr( convert, "legend" ) ) 
+    # isInfLeg <- is.infinite( attr( convert, "legend" ) ) 
     
     attr( convert, "legend" ) <- format( attr( convert, "legend" ), 
         digits = digits, nsmall = nsmall, ... ) 
     
-    # TO DO: Can this be improved??
-    attr( convert, "legend" )[ isInfLeg ] <- ""
+    #   Hide min or max value?
+    if( hideMinMax[ 1L ] ){
+        testMin <- breaks == min( breaks )
+        attr( convert, "legend" )[ which( testMin ) ] <- "" 
+        rm( testMin ) 
+    }   
     
-    rm( isInfLeg ) 
+    if( hideMinMax[ 2L ] ){
+        testMax <- breaks == max( breaks )
+        attr( convert, "legend" )[ which( testMax ) ] <- "" 
+        rm( testMax )
+    }   
     
+    # # TO DO: Can this be improved??
+    # attr( convert, "legend" )[ isInfLeg ] <- ""
     
-    
-    # browser() 
+    # rm( isInfLeg ) 
     
     
     if( decreasing ){ 
@@ -4022,8 +4223,8 @@ setColourRampScale.default <- function(
     # ma_x <- max( mi_x[ is.finite( mi_x ) ], na.rm = TRUE )
     # mi_x <- min( mi_x[ is.finite( mi_x ) ], na.rm = TRUE ) 
     
-    out[[ "iBreaks" ]][ out[[ "iBreaks" ]] == -Inf ] <- -.Machine[[ "double.xmax" ]]
-    out[[ "iBreaks" ]][ out[[ "iBreaks" ]] == +Inf ] <- +.Machine[[ "double.xmax" ]]
+    # out[[ "iBreaks" ]][ out[[ "iBreaks" ]] == -Inf ] <- -.Machine[[ "double.xmax" ]]
+    # out[[ "iBreaks" ]][ out[[ "iBreaks" ]] == +Inf ] <- +.Machine[[ "double.xmax" ]]
     
     
     
@@ -4045,6 +4246,25 @@ setColourRampScale.default <- function(
             breaks <- rev( breaks ) 
             lab    <- rev( lab ) 
         }   
+        
+        
+        #   Test that no values in x is outside the 'breaks'
+        #   bounds
+        if( any( testHigh <- na.omit( x ) > max( breaks ) ) ){
+            warning( sprintf( 
+                "Some values in x (%s) are higher than max(breaks). They may be displayed wrongly (or as NA)", 
+                sum( testHigh )
+            ) ) 
+        }   
+        
+        if( any( testLow <- na.omit( x ) < min( breaks ) ) ){
+            warning( sprintf( 
+                "Some values in x (%s) are lower than min(breaks). They may be displayed wrongly (or as NA)", 
+                sum( testLow )
+            ) ) 
+        }   
+        rm( testHigh, testLow )
+        
         
         # #   Add NA's again # # NO! NA are handled by cut()
         # if( any( rowIsNa ) ){
