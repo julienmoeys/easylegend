@@ -1,5 +1,5 @@
 set pkgname=easylegend
-set version=1.3.0
+set version=1.4.0
 
 cd /D "%rPackagesDir%\%pkgname%\pkg" 
 
