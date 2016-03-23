@@ -1251,15 +1251,39 @@ setColorScale.default <- function(
     
     #   Define the breaks in x values
     if( is.null( breaks ) ){ 
+        if( length( x ) == 0 ){
+            stop( "length(x) (or number of values in 'x') is 0" ) 
+        }   
+        
+        #   Unique x values:
+        u_x <- unique( x ) 
+        u_x <- u_x[ !is.na( u_x ) ] 
+        u_x <- u_x[ !is.nan( u_x ) ] 
+        u_x <- u_x[ !is.infinite( u_x ) ] 
+        
+        #   Handle single unique values
+        if( length( u_x ) == 0 ){
+            stop( "All values in 'x' are NA, NaN or infinite" ) 
+            
+        }else if( length( u_x ) == 1L ){
+            if( u_x == 0 ){
+                u_x <- c( -1e-3, u_x, 1e-3 )
+                
+            }else{
+                u_x <- c( u_x - (u_x/1000), u_x, u_x + (u_x/1000) )
+                
+            }   
+        }   
+        
         if( decreasing ){ 
             breaks <- seq( 
-                from = max( x, na.rm = hasNA ), 
-                to   = min( x, na.rm = hasNA ), 
+                from = max( u_x, na.rm = hasNA ), 
+                to   = min( u_x, na.rm = hasNA ), 
                 length.out = n + 1 ) 
         }else{ 
             breaks <- seq( 
-                from = min( x, na.rm = hasNA ), 
-                to   = max( x, na.rm = hasNA ), 
+                from = min( u_x, na.rm = hasNA ), 
+                to   = max( u_x, na.rm = hasNA ), 
                 length.out = n + 1 ) 
         }   
     }else{ 
@@ -2506,15 +2530,39 @@ setColourScale.default <- function(
     
     #   Define the breaks in x values
     if( is.null( breaks ) ){ 
+        if( length( x ) == 0 ){
+            stop( "length(x) (or number of values in 'x') is 0" ) 
+        }   
+        
+        #   Unique x values:
+        u_x <- unique( x ) 
+        u_x <- u_x[ !is.na( u_x ) ] 
+        u_x <- u_x[ !is.nan( u_x ) ] 
+        u_x <- u_x[ !is.infinite( u_x ) ] 
+        
+        #   Handle single unique values
+        if( length( u_x ) == 0 ){
+            stop( "All values in 'x' are NA, NaN or infinite" ) 
+            
+        }else if( length( u_x ) == 1L ){
+            if( u_x == 0 ){
+                u_x <- c( -1e-3, u_x, 1e-3 )
+                
+            }else{
+                u_x <- c( u_x - (u_x/1000), u_x, u_x + (u_x/1000) )
+                
+            }   
+        }   
+        
         if( decreasing ){ 
             breaks <- seq( 
-                from = max( x, na.rm = hasNA ), 
-                to   = min( x, na.rm = hasNA ), 
+                from = max( u_x, na.rm = hasNA ), 
+                to   = min( u_x, na.rm = hasNA ), 
                 length.out = nBreaks ) 
         }else{ 
             breaks <- seq( 
-                from = min( x, na.rm = hasNA ), 
-                to   = max( x, na.rm = hasNA ), 
+                from = min( u_x, na.rm = hasNA ), 
+                to   = max( u_x, na.rm = hasNA ), 
                 length.out = nBreaks ) 
         }   
         
@@ -3643,20 +3691,44 @@ setColourRampScale.default <- function(
     
     
     #   Has x any NA values?
-    hasNA <- any( is.na( x ) ) 
+    hasNA <- any( is.na( x ) ) | any( is.nan( x ) ) 
     
     
     #   Define the breaks in x values
-    if( is.null( breaks ) ){ 
+    if( is.null( breaks ) ){
+        if( length( x ) == 0 ){
+            stop( "length(x) (or number of values in 'x') is 0" ) 
+        }   
+        
+        #   Unique x values:
+        u_x <- unique( x ) 
+        u_x <- u_x[ !is.na( u_x ) ] 
+        u_x <- u_x[ !is.nan( u_x ) ] 
+        u_x <- u_x[ !is.infinite( u_x ) ] 
+        
+        #   Handle single unique values
+        if( length( u_x ) == 0 ){
+            stop( "All values in 'x' are NA, NaN or infinite" ) 
+            
+        }else if( length( u_x ) == 1L ){
+            if( u_x == 0 ){
+                u_x <- c( -1e-3, u_x, 1e-3 )
+                
+            }else{
+                u_x <- c( u_x - (u_x/1000), u_x, u_x + (u_x/1000) )
+                
+            }   
+        }   
+        
         if( decreasing ){ 
             breaks <- seq( 
-                from = max( x, na.rm = hasNA ), 
-                to   = min( x, na.rm = hasNA ), 
+                from = max( u_x, na.rm = hasNA ), 
+                to   = min( u_x, na.rm = hasNA ), 
                 length.out = nBreaks ) 
         }else{ 
             breaks <- seq( 
-                from = min( x, na.rm = hasNA ), 
-                to   = max( x, na.rm = hasNA ), 
+                from = min( u_x, na.rm = hasNA ), 
+                to   = max( u_x, na.rm = hasNA ), 
                 length.out = nBreaks ) 
         }   
         
@@ -4250,14 +4322,14 @@ setColourRampScale.default <- function(
         
         #   Test that no values in x is outside the 'breaks'
         #   bounds
-        if( any( testHigh <- na.omit( x ) > max( breaks ) ) ){
+        if( any( testHigh <- (na.omit( x ) > max( breaks )) ) ){
             warning( sprintf( 
                 "Some values in x (%s) are higher than max(breaks). They may be displayed wrongly (or as NA)", 
                 sum( testHigh )
             ) ) 
         }   
         
-        if( any( testLow <- na.omit( x ) < min( breaks ) ) ){
+        if( any( testLow <- (na.omit( x ) < min( breaks )) ) ){
             warning( sprintf( 
                 "Some values in x (%s) are lower than min(breaks). They may be displayed wrongly (or as NA)", 
                 sum( testLow )

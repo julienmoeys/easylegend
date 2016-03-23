@@ -1,6 +1,15 @@
 
     package easylegend
     
+VERSION 1.4.0
+    
+    2016/03/23  setColourRampScale(), setColourScale() and 
+        setColorScale() now account for cases where the input 
+        values for which the legend is to be created have 
+        only one unique value (also when this value is 0), 
+        and will give an error if there are only NA or NaN 
+        or infinite values.
+    
 VERSION 1.3.0
 
     2015/05/29  Implemented two new functions: 
