@@ -250,18 +250,21 @@ setFactorGraphics.default <- function(
     
     
     if( ord ){ 
-        convertNA <- convert[ isNA, , drop = FALSE ]
+        convertNA   <- convert[  isNA, , drop = FALSE ]
+        convertNoNA <- convert[ !isNA, , drop = FALSE ]
         
         o <- order( 
-            x          = convert[ !isNA, "values" ], 
+            x          = convertNoNA[, "values" ], 
             decreasing = decreasing, 
             na.last    = TRUE ) # "na.last = TRUE" is default
         
         convert <- rbind( 
-            convert[ o, ,drop = FALSE ], 
+            convertNoNA[ o, ,drop = FALSE ], 
             convertNA ) 
             #   drop: So if there is just one column it 
             #   does not become a vector
+        
+        rm( convertNA, convertNoNA )
         
         if( !is.null( colList ) ){
             colList <- colList[ o ]
