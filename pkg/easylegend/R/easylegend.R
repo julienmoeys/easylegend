@@ -162,21 +162,18 @@ setFactorGraphics <- function(
 #'@export 
 #'
 setFactorGraphics.default <- function(
- x, 
- col=FALSE, 
- pch=FALSE, 
- fill=FALSE, 
- leg=NULL, 
- ord=TRUE, 
- decreasing=FALSE, 
- #colList=NULL, 
- #pchList=NULL, 
- #fillList=NULL, 
- naCol="black", 
- naPch=25, 
- naFill="black", 
- naLeg="na", 
- ...
+    x, 
+    col=FALSE, 
+    pch=FALSE, 
+    fill=FALSE, 
+    leg=NULL, 
+    ord=TRUE, 
+    decreasing=FALSE, 
+    naCol="black", 
+    naPch=25, 
+    naFill="black", 
+    naLeg="na", 
+    ...
 ){  
     if( !is.logical( col ) ){ 
         colList <- col
@@ -204,29 +201,66 @@ setFactorGraphics.default <- function(
     }   
     
     
-    #   Prepare a conversion table: From x-values to colors, symbols, 
+    #   Prepare a conversion table: From x-values to colours, symbols, 
     #   line type, etc.
     convert <- data.frame( 
         "values"    = unique(x), 
-        #"col"       = NA_character_, 
-        #"pch"       = as.integer( NA_real_ ), 
-        #"lty"       = as.integer( NA_real_ ), 
-        #"legends"   = NA_character_, 
         stringsAsFactors = FALSE 
     )   
-    
-    
-    if( ord ){ 
-        convert <- convert[ order( convert[, "values" ], decreasing = decreasing ), , 
-            drop = FALSE ] 
-            # So if there is just one column it 
-            # does not become a vector
-    }   
     
     
     #   Are there NA in the data
     isNA  <- is.na( convert[, "values" ] )
     hasNA <- any( isNA ) 
+      
+    
+    #   Test the number of colours, fill and pch
+    if( !is.null( colList ) ){
+        testColList <- length( colList ) == (nrow( convert ) - sum( isNA )) 
+        
+        if( !testColList ){ 
+            stop( "'col' should be the same length as 'unique(x)', NA excluded (or a logical value)" )
+        };  rm(testColList)
+    }   
+    
+    if( !is.null( fillList ) ){
+        testFillList <- length( fillList ) == (nrow( convert ) - sum( isNA )) 
+        
+        if( !testFillList ){ 
+            stop( "'fill' should be the same length as 'unique(x)', NA excluded (or a logical value)" )
+        };  rm(testFillList)
+    }   
+    
+    if( !is.null( pchList ) ){
+        testPchList <- length( pchList ) == (nrow( convert ) - sum( isNA ))
+        
+        if( !testPchList ){ 
+            stop( "'pch' should be the same length as 'unique(x)', NA excluded (or a logical value)" )
+        };  rm(testPchList)
+    }   
+    
+    
+    if( ord ){ 
+        o <- order( convert[, "values" ], decreasing = decreasing )
+        
+        convert <- convert[ o, ,drop = FALSE ] 
+            # So if there is just one column it 
+            # does not become a vector
+        
+        if( !is.null( colList ) ){
+            colList <- colList[ o ]
+        }   
+        
+        if( !is.null( fillList ) ){
+            fillList <- fillList[ o ]
+        }   
+        
+        if( !is.null( pchList ) ){
+            pchList <- pchList[ o ]
+        }   
+        
+        rm( o )
+    }   
     
     
     #   Output list
@@ -249,10 +283,6 @@ setFactorGraphics.default <- function(
                 arguments <- c( arguments, list( "pch" = pch ) ) 
             }   
             
-            # if( !is.null( lty ) ){ 
-                # arguments <- c( arguments, list( "lty" = lty ) ) 
-            # }   
-            
             arguments <- c( arguments, list(...) )
             
             do.call( 
@@ -271,11 +301,6 @@ setFactorGraphics.default <- function(
     #   Color legend ============================================
     if( col ){ 
         if( is.null(colList) ){ 
-            # library( "colorspace" )
-            
-            # convert[ !isNA, "col" ] <- rainbow( 
-                # n = nrow( convert ) - as.integer( hasNA ), 
-                # s = 0.60, v = 0.80, end = 4/6 ) 
             
             convert[ !isNA, "col" ] <- hcl( 
                 h = seq( from = 15, to = 360+15, length.out = (nrow( convert ) - as.integer( hasNA ))+1 ), 
@@ -285,42 +310,12 @@ setFactorGraphics.default <- function(
             
             convert[ isNA, "col" ] <- naCol
             
-        }else{ 
-            testColList <- length( colList ) == (nrow( convert ) - sum( isNA )) 
-            
-            if( !testColList ){ 
-                stop( "'col' should be the same length as 'unique(x)', NA excluded (or a logical value)" )
-            };  rm(testColList)
-            
-            # if( !is.data.frame( colList ) ){ 
-                # stop( "'colList' must be a data.frame" ) 
-            # }   
-            
-            # vc <- c( "values", "col" )
-            # testColCol <- vc %in% colnames(colList) 
-            
-            # if( !all(testColCol) ){ 
-                # stop( sprintf( "Some columns are missing in 'colList': %s", 
-                    # paste( vc[ !testColCol ], collapse = "; " ) ) )
-            # };  rm( testColCol )
-            
-            # if( nrow( convert ) != nrow( colList ) ){ 
-                # stop( "'length(unique(x))' and 'nrow(colList)' must be identical (incl. NA values)." ) 
-            # }   
-            
+        }else{             
             if( is.factor( colList ) ){ 
                 colList <- as.character( colList ) 
             }   
             
             convert[ !isNA, "col" ] <- colList
-            
-            # convert <- merge( 
-                # x     = convert, 
-                # y     = colList, 
-                # by    = "values", 
-                # all.x = TRUE, 
-                # sort  = FALSE 
-            # );  rm( vc )
             
             convert[ isNA, "col" ] <- naCol
             
@@ -371,10 +366,6 @@ setFactorGraphics.default <- function(
     if( fill ){ 
         if( is.null(fillList) ){ 
             
-            # convert[ !isNA, "fill" ] <- rainbow( 
-                # n = nrow( convert ) - as.integer( hasNA ), 
-                # s = 0.60, v = 0.80, end = 4/6 ) 
-            
             convert[ !isNA, "fill" ] <- hcl( 
                 h = seq( from = 0, to = 360, length.out = (nrow( convert ) - as.integer( hasNA ))+1 ), 
                 c = 100, 
@@ -382,42 +373,12 @@ setFactorGraphics.default <- function(
             
             convert[ isNA, "fill" ] <- naFill
             
-        }else{ 
-            testFillList <- length( fillList ) == (nrow( convert ) - sum( isNA )) 
-            
-            if( !testFillList ){ 
-                stop( "'fill' should be the same length as 'unique(x)', NA excluded (or a logical value)" )
-            };  rm(testFillList)
-            
-            # if( !is.data.frame( fillList ) ){ 
-                # stop( "'fillList' must be a data.frame" ) 
-            # }   
-            
-            # vc <- c( "values", "fill" )
-            # testColCol <- vc %in% colnames(fillList) 
-            
-            # if( !all(testColCol) ){ 
-                # stop( sprintf( "Some columns are missing in 'fillList': %s", 
-                    # paste( vc[ !testColCol ], collapse = "; " ) ) )
-            # };  rm( testColCol )
-            
-            # if( nrow( convert ) != nrow( fillList ) ){ 
-                # stop( "'length(unique(x))' and 'nrow(fillList)' must be identical (incl. NA values)." ) 
-            # }   
-            
+        }else{             
             if( is.factor( fillList ) ){ 
                 fillList <- as.character( fillList ) 
             }   
             
             convert[ !isNA, "fill" ] <- fillList
-            
-            # convert <- merge( 
-                # x     = convert, 
-                # y     = fillList, 
-                # by    = "values", 
-                # all.x = TRUE, 
-                # sort  = FALSE 
-            # );  rm( vc )
             
             convert[ isNA, "fill" ] <- naFill 
             
@@ -475,28 +436,6 @@ setFactorGraphics.default <- function(
             }   
             
         }else{ 
-            testPchList <- length( pchList ) == (nrow( convert ) - sum( isNA ))
-            
-            if( !testPchList ){ 
-                stop( "'pch' should be the same length as 'unique(x)', NA excluded (or a logical value)" )
-            };  rm(testPchList)
-            
-            # if( !is.data.frame( pchList ) ){ 
-                # stop( "'pchList' must be a data.frame" ) 
-            # }   
-            
-            # vp <- c( "values", "pch" )
-            # testPchCol <- vp %in% colnames(pchList) 
-            
-            # if( !all(testPchCol) ){ 
-                # stop( sprintf( "Some columns are missing in 'pchList': %s", 
-                    # paste( vp[ !testPchCol ], collapse = "; " ) ) )
-            # };  rm( testPchCol )
-            
-            # if( nrow( convert ) != nrow( pchList ) ){ 
-                # stop( "'length(unique(x))' and 'nrow(pchList)' must be identical (incl. NA values)." ) 
-            # }   
-            
             if( is.factor( pchList ) ){ 
                 warning( "pchList is factor-class. Ambiguous format! Forced to character." )
                 
@@ -504,14 +443,6 @@ setFactorGraphics.default <- function(
             }   
             
             convert[ !isNA, "pch" ] <- pchList
-            
-            # convert <- merge( 
-                # x     = convert, 
-                # y     = pchList, 
-                # by    = "values", 
-                # all.x = TRUE, 
-                # sort  = FALSE 
-            # );  rm( vp ) 
             
             convert[ isNA, "pch" ] <- naPch
             
@@ -560,12 +491,7 @@ setFactorGraphics.default <- function(
     }   
     
     
-    if( col | fill ){ 
-        # isNotNA <- !is.na( convert[, "values" ] )
-        
-        # formals( vg[[ "legend" ]] )[[ "col" ]][ isNA ] <- 
-            # NA_character_ 
-        
+    if( col | fill ){         
         out[[ "iCol" ]]    <- convert[ !isNA, "col" ] 
         out[[ "iFill" ]]   <- convert[ !isNA, "fill" ] 
         
@@ -611,36 +537,12 @@ setFactorGraphics.default <- function(
             stop( "'leg' should be the same length as 'unique(x)', NA excluded (or NULL)" )
         };  rm( testLeg )
         
-        # if( !is.data.frame( leg ) ){ 
-            # stop( "'leg' must be a data.frame" ) 
-        # }   
-        
-        # vl <- c( "values", "legends" )
-        # testLegCol <- vl %in% colnames(leg) 
-        
-        # if( !all(testLegCol) ){ 
-            # stop( sprintf( "Some columns are missing in 'leg': %s", 
-                # paste( vl[ !testLegCol ], collapse = "; " ) ) )
-        # };  rm( testLegCol )
-        
-        # if( is.factor( leg[, "legends" ] ) ){ 
-            # leg[, "legends" ] <- as.character( leg[, "legends" ] ) 
-        # }   
-        
         convert[ !isNA, "legends" ] <- leg 
         
         #   Convert factors to character
         if( is.factor( convert[, "legends" ] ) ){ 
             convert[, "legends" ] <- as.character( convert[, "legends" ] )
         }   
-        
-        # convert <- merge( 
-            # x     = convert, 
-            # y     = leg, 
-            # by    = "values", 
-            # all.x = TRUE, 
-            # sort  = FALSE 
-        # );  rm( vl )
         
         convert[ isNA, "legends" ] <- naLeg 
         
