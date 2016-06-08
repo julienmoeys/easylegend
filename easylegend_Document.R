@@ -17,7 +17,7 @@ pkgDescription(
     pkgDir      = pkgDir, 
     pkgVersion  = "1.4.1", 
     pkgDepends  = NULL, 
-    pkgImports  = "grDevices", 
+    pkgImports  = c( "graphics", "grDevices", "utils", "stats" ), 
     pkgSuggests = NULL, 
     RVersion    = NULL   
 )   

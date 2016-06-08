@@ -11,5 +11,8 @@ URL: http://www.slu.se/ckb
 Depends: 
     R (>= 3.3.0)
 Imports: 
-    grDevices
+    graphics,
+    grDevices,
+    utils,
+    stats
 RoxygenNote: 5.0.1

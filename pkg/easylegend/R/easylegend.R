@@ -161,6 +161,7 @@ setFactorGraphics <- function(
 #'
 #'@export 
 #'
+#'@importFrom grDevices hcl 
 setFactorGraphics.default <- function(
     x, 
     col=FALSE, 
@@ -302,7 +303,7 @@ setFactorGraphics.default <- function(
     if( col ){ 
         if( is.null(colList) ){ 
             
-            convert[ !isNA, "col" ] <- hcl( 
+            convert[ !isNA, "col" ] <- grDevices::hcl( 
                 h = seq( from = 15, to = 360+15, length.out = (nrow( convert ) - as.integer( hasNA ))+1 ), 
                 c = 100, 
                 l = 50 )[ -((nrow( convert ) - as.integer( hasNA ))+1) ] 
@@ -366,7 +367,7 @@ setFactorGraphics.default <- function(
     if( fill ){ 
         if( is.null(fillList) ){ 
             
-            convert[ !isNA, "fill" ] <- hcl( 
+            convert[ !isNA, "fill" ] <- grDevices::hcl( 
                 h = seq( from = 0, to = 360, length.out = (nrow( convert ) - as.integer( hasNA ))+1 ), 
                 c = 100, 
                 l = 65 )[ -((nrow( convert ) - as.integer( hasNA ))+1) ] 
@@ -770,11 +771,12 @@ asPch <- function(
 #'
 #'@export 
 #'
+#'@importFrom utils installed.packages
 setFactorGraphics.RasterLayer <- function( 
  x, 
  ...
 ){  
-    if( !"raster" %in% rownames( installed.packages() ) ){ 
+    if( !"raster" %in% rownames( utils::installed.packages() ) ){ 
         stop( "setFactorGraphics.RasterLayer requires the package 'raster' to be installed" ) 
     }   
     
@@ -824,13 +826,20 @@ setFactorGraphics.RasterLayer <- function(
 
 
 
-# setColorScale ===================================================
+# setColorScale ============================================
+
+#'@importFrom grDevices rgb2hsv
+#'@importFrom grDevices col2rgb
+NULL 
 
 .col2hsv <- function(col){ 
-    return( as.data.frame( t( rgb2hsv( r = col2rgb( col ) ) ) ) )
+    return( as.data.frame( t( grDevices::rgb2hsv( r = grDevices::col2rgb( col ) ) ) ) )
 }   
 
 
+#'@importFrom graphics rect 
+#'@importFrom graphics segments
+NULL 
 
 .addColorGradientLegend <- function( 
  l,      # output from legend, called a 1st time 
@@ -885,7 +894,7 @@ setFactorGraphics.RasterLayer <- function(
         subFill  <- fill[ sel ] 
         
         for( j in 1:nSubFill ){ 
-            rect(
+            graphics::rect(
                 xleft   = l$rect$left + fillWidth*1/3, 
                 ybottom = ytop - dy2 * j/nSubFill, 
                 xright  = l$rect$left + fillWidth*2/3, 
@@ -912,7 +921,7 @@ setFactorGraphics.RasterLayer <- function(
         
         
         #   Segment for the boundary thick mark
-        segments(
+        graphics::segments(
             x0  = l$rect$left + fillWidth*2/3, 
             y0  = ytop, 
             x1  = l$rect$left + fillWidth*3/4, 
@@ -927,7 +936,7 @@ setFactorGraphics.RasterLayer <- function(
         if( i == n ){ 
             yy[ i+1 ] <- ybottom 
             
-            segments(
+            graphics::segments(
                 x0  = l$rect$left + fillWidth*2/3, 
                 y0  = ybottom, 
                 x1  = l$rect$left + fillWidth*3/4, 
@@ -938,7 +947,7 @@ setFactorGraphics.RasterLayer <- function(
     }   
     
     #   Big rectangle
-    rect(
+    graphics::rect(
         xleft   = l$rect$left + fillWidth*1/3, 
         ybottom = min(l$text$y) - dy/2, # - dy/4
         xright  = l$rect$left + fillWidth*2/3, 
@@ -1062,6 +1071,9 @@ setColorScale <- function(
 #'
 #'@export 
 #'
+#'@importFrom grDevices hsv 
+#'@importFrom graphics par
+#'@importFrom graphics text
 setColorScale.default <- function( 
     x, 
     col      = FALSE, 
@@ -1099,7 +1111,7 @@ setColorScale.default <- function(
     #       Generating a 5-colour range
     if( sCol & all( is.logical( col ) ) ){ 
         # col  <- gray( c( .75, .50, .25, 0 ) ) 
-        col  <- hsv( 
+        col  <- grDevices::hsv( 
             h = 0.55, # 0.04 # 0.21 # 0.38 # 0.55
             s = seq( .20,  .8, length.out = 5 ), 
             v = seq( .95,  .3, length.out = 5 ) )
@@ -1111,7 +1123,7 @@ setColorScale.default <- function(
     #       Generating a 5-colour range
     if( sFill & all( is.logical( fill ) ) ){ 
         # fill <- gray( c( .75, .50, .25, 0 ) ) 
-        fill <- hsv( 
+        fill <- grDevices::hsv( 
             h = 0.55, # 0.04 # 0.21 # 0.38 # 0.55
             s = seq( .20,  .8, length.out = 5 ), 
             v = seq( .95,  .3, length.out = 5 ) )
@@ -1206,8 +1218,8 @@ setColorScale.default <- function(
             # Arguments that exists in legend()
             x, y = NULL, legend, col = NULL, 
             fill = NULL, border = "black", cex = 1, 
-            text.col = par( "col" ), text.font = NULL, 
-            title.col = par( "col" ), horiz = FALSE, 
+            text.col = graphics::par( "col" ), text.font = NULL, 
+            title.col = graphics::par( "col" ), horiz = FALSE, 
             title = NULL, y.intersp = y.intersp, ..., 
             
             #   Arguments that do not exists in legend() (extra)
@@ -1263,10 +1275,10 @@ setColorScale.default <- function(
                     border = border ) 
                 
                 # if( missing( "cex"       ) ){ cex       <- 1            } 
-                # if( missing( "text.col"  ) ){ text.col  <- par( "col" ) } 
+                # if( missing( "text.col"  ) ){ text.col  <- graphics::par( "col" ) } 
                 # if( missing( "text.font" ) ){ text.font <- NULL         } 
                 
-                text( x = lRes$text$x[1], y = yy, 
+                graphics::text( x = lRes$text$x[1], y = yy, 
                     labels = legend, # cex = cex*par("cex"), 
                     col = text.col, pos = 4, offset = 0 ) # vfont = text.font, 
                 
@@ -1986,11 +1998,12 @@ setColorScale.matrix <- function(
 #'
 #'@export 
 #'
+#'@importFrom utils installed.packages
 setColorScale.RasterLayer <- function( 
  x, 
  ...
 ){  
-    if( !"raster" %in% rownames( installed.packages() ) ){ 
+    if( !"raster" %in% rownames( utils::installed.packages() ) ){ 
         stop( "setColorScale.RasterLayer requires the package 'raster' to be installed" ) 
     }   
     
@@ -2040,7 +2053,7 @@ setColorScale.RasterLayer <- function(
 
 
 
-# plotAnywhere ==================================================
+# plotAnywhere =============================================
 
 #' Plot (a legend) anywhere in the figure (margins included)
 #'
@@ -2072,23 +2085,26 @@ setColorScale.RasterLayer <- function(
 #'
 #'@export 
 #'
+#'@importFrom graphics par 
+#'@importFrom graphics plot 
+#'@importFrom graphics clip   
 plotAnywhere <- function( 
- expr  = NULL, 
- mar   = rep(.1,4), 
- .clip = TRUE, 
- ... 
+    expr  = NULL, 
+    mar   = rep(.1,4), 
+    .clip = TRUE, 
+    ... 
 ){  
     # Get the original expression
     # expr <- deparse( substitute( expr ) )
     
     # #   Get old graphical parameters
-    oldPar <- par() 
+    oldPar <- graphics::par() 
     
     #   Set new graphical parameters
-    par( "mar" = mar, new = TRUE, ... ) 
+    graphics::par( "mar" = mar, new = TRUE, ... ) 
     
     #   Ghost plot (empty), to set the new figure
-    plot( x = c(0,1), y = c(0,1), type = "n", bty = "n", 
+    graphics::plot( x = c(0,1), y = c(0,1), type = "n", bty = "n", 
         xaxt = "n", yaxt = "n", xlab = "", ylab = "" ) 
     
     #   Call the function
@@ -2096,15 +2112,16 @@ plotAnywhere <- function(
     
     #   Reset margins, figure region and figure region relative 
     #   extent
-    par( "mar" = oldPar[[ "mar" ]], "usr" = oldPar[[ "usr" ]], 
+    graphics::par( "mar" = oldPar[[ "mar" ]], "usr" = oldPar[[ "usr" ]], 
         "plt" = oldPar[[ "plt" ]], new = TRUE, ... ) 
     
     #   Reset the clip region
     if( .clip ){ 
-        do.call( "clip", as.list( oldPar[[ "usr" ]] ) ) 
+        clip0 <- graphics::clip
+        do.call( "clip0", as.list( oldPar[[ "usr" ]] ) ) 
     }   
     
-    par( new = FALSE ) 
+    graphics::par( new = FALSE ) 
     
     return( invisible( oldPar[[ "usr" ]] ) ) 
 }   
@@ -2279,6 +2296,9 @@ setColourScale <- function(
 #'
 #'@export 
 #'
+#'@importFrom grDevices hsv 
+#'@importFrom graphics par 
+#'@importFrom stats na.omit
 setColourScale.default <- function( 
     x, 
     col      = FALSE, 
@@ -2357,13 +2377,13 @@ setColourScale.default <- function(
     #       Generating a 5-colour range
     if( sCol & all( is.logical( col ) ) ){ 
         if( decreasing ){
-            col <- hsv( 
+            col <- grDevices::hsv( 
                 h = 0.55, # 0.04 # 0.21 # 0.38 # 0.55
                 s = seq( .8,  .20, length.out = nBreaks - 1L ), 
                 v = seq( .3,  .95, length.out = nBreaks - 1L ) )
                 #        dark light 
         }else{
-            col <- hsv( 
+            col <- grDevices::hsv( 
                 h = 0.55, # 0.04 # 0.21 # 0.38 # 0.55
                 s = seq( .20,  .8, length.out = nBreaks - 1L ), 
                 v = seq( .95,  .3, length.out = nBreaks - 1L ) )
@@ -2379,13 +2399,13 @@ setColourScale.default <- function(
     if( sFill & all( is.logical( fill ) ) ){ 
         # fill <- gray( c( .75, .50, .25, 0 ) ) 
         if( decreasing ){
-            fill <- hsv( 
+            fill <- grDevices::hsv( 
                 h = 0.55, # 0.04 # 0.21 # 0.38 # 0.55
                 s = seq( .8,  .20, length.out = nBreaks - 1L ), 
                 v = seq( .3,  .95, length.out = nBreaks - 1L ) )
                 #        dark light 
         }else{
-            fill <- hsv( 
+            fill <- grDevices::hsv( 
                 h = 0.55, # 0.04 # 0.21 # 0.38 # 0.55
                 s = seq( .20,  .8, length.out = nBreaks - 1L ), 
                 v = seq( .95,  .3, length.out = nBreaks - 1L ) )
@@ -2544,9 +2564,9 @@ setColourScale.default <- function(
             fill        = NULL, 
             border      = "black", 
             cex         = 1, 
-            text.col    = par( "col" ), 
+            text.col    = graphics::par( "col" ), 
             text.font   = NULL, 
-            title.col   = par( "col" ), 
+            title.col   = graphics::par( "col" ), 
             horiz       = FALSE, 
             title       = NULL, 
             y.intersp   = y.intersp, 
@@ -2830,14 +2850,14 @@ setColourScale.default <- function(
             
             #   Test that no values in x is outside the 'breaks'
             #   bounds
-            if( any( testHigh <- na.omit( x ) > max( breaks ) ) ){
+            if( any( testHigh <- stats::na.omit( x ) > max( breaks ) ) ){
                 warning( sprintf( 
                     "Some values in x (%s) are higher than max(breaks). They may be displayed wrongly (or as NA)", 
                     sum( testHigh )
                 ) ) 
             }   
             
-            if( any( testLow <- na.omit( x ) < min( breaks ) ) ){
+            if( any( testLow <- stats::na.omit( x ) < min( breaks ) ) ){
                 warning( sprintf( 
                     "Some values in x (%s) are lower than min(breaks). They may be displayed wrongly (or as NA)", 
                     sum( testLow )
@@ -2951,14 +2971,14 @@ setColourScale.default <- function(
             
             #   Test that no values in x is outside the 'breaks'
             #   bounds
-            if( any( testHigh <- na.omit( x ) > max( breaks ) ) ){
+            if( any( testHigh <- stats::na.omit( x ) > max( breaks ) ) ){
                 warning( sprintf( 
                     "Some values in x (%s) are higher than max(breaks). They may be displayed wrongly (or as NA)", 
                     sum( testHigh )
                 ) ) 
             }   
             
-            if( any( testLow <- na.omit( x ) < min( breaks ) ) ){
+            if( any( testLow <- stats::na.omit( x ) < min( breaks ) ) ){
                 warning( sprintf( 
                     "Some values in x (%s) are lower than min(breaks). They may be displayed wrongly (or as NA)", 
                     sum( testLow )
@@ -3169,11 +3189,12 @@ setColourScale.matrix <- function(
 #'
 #'@export 
 #'
+#'@importFrom utils installed.packages
 setColourScale.RasterLayer <- function( 
  x, 
  ...
 ){  
-    if( !"raster" %in% rownames( installed.packages() ) ){ 
+    if( !"raster" %in% rownames( utils::installed.packages() ) ){ 
         stop( "setColourScale.RasterLayer requires the package 'raster' to be installed" ) 
     }   
     
@@ -3224,6 +3245,10 @@ setColourScale.RasterLayer <- function(
 
 
 # setColourRampScale =======================================
+
+#'@importFrom graphics rect 
+#'@importFrom graphics segments
+NULL 
 
 .addColorGradientLegend2 <- function( 
     l,          # output from legend, called a 1st time 
@@ -3284,7 +3309,7 @@ setColourScale.RasterLayer <- function(
         subFill  <- fill[ sel ] 
         
         for( j in 1:nSubFill ){ 
-            rect(
+            graphics::rect(
                 xleft   = l$rect$left + fillWidth*1/3, 
                 ybottom = ytop - dy2 * j/nSubFill, 
                 xright  = l$rect$left + fillWidth*2/3, 
@@ -3311,7 +3336,7 @@ setColourScale.RasterLayer <- function(
         
         
         #   Segment for the boundary thick mark
-        segments(
+        graphics::segments(
             x0  = l$rect$left + fillWidth*2/3, 
             y0  = ytop, 
             x1  = l$rect$left + fillWidth*3/4, 
@@ -3326,7 +3351,7 @@ setColourScale.RasterLayer <- function(
         if( i == n ){ 
             yy[ i+1 ] <- ybottom 
             
-            segments(
+            graphics::segments(
                 x0  = l$rect$left + fillWidth*2/3, 
                 y0  = ybottom, 
                 x1  = l$rect$left + fillWidth*3/4, 
@@ -3337,7 +3362,7 @@ setColourScale.RasterLayer <- function(
     }   
     
     #   Big rectangle
-    rect(
+    graphics::rect(
         xleft   = l$rect$left + fillWidth*1/3, 
         ybottom = min(l$text$y) - dy/2, # - dy/4
         xright  = l$rect$left + fillWidth*2/3, 
@@ -3496,6 +3521,10 @@ setColourRampScale <- function(
 #'
 #'@export 
 #'
+#'@importFrom grDevices hsv 
+#'@importFrom graphics par 
+#'@importFrom graphics text
+#'@importFrom stats na.omit
 setColourRampScale.default <- function( 
     x, 
     # col    = FALSE, 
@@ -3556,13 +3585,13 @@ setColourRampScale.default <- function(
     #       Generating a 5-colour range
     if( is.null( fill ) ){ 
         if( decreasing ){
-            fill <- hsv( 
+            fill <- grDevices::hsv( 
                 h = 0.55, # 0.04 # 0.21 # 0.38 # 0.55
                 s = seq( .8,  .20, length.out = nBreaks ), 
                 v = seq( .3,  .95, length.out = nBreaks ) )
                 #        dark light 
         }else{
-            fill <- hsv( 
+            fill <- grDevices::hsv( 
                 h = 0.55, # 0.04 # 0.21 # 0.38 # 0.55
                 s = seq( .20,  .8, length.out = nBreaks ), 
                 v = seq( .95,  .3, length.out = nBreaks ) )
@@ -3710,9 +3739,9 @@ setColourRampScale.default <- function(
             fill        = NULL, 
             border      = "black", 
             cex         = 1, 
-            text.col    = par( "col" ), 
+            text.col    = graphics::par( "col" ), 
             text.font   = NULL, 
-            title.col   = par( "col" ), 
+            title.col   = graphics::par( "col" ), 
             horiz       = FALSE, 
             title       = NULL, 
             y.intersp   = y.intersp, 
@@ -3764,10 +3793,10 @@ setColourRampScale.default <- function(
                 border = border ) 
             
             # if( missing( "cex"       ) ){ cex       <- 1            } 
-            # if( missing( "text.col"  ) ){ text.col  <- par( "col" ) } 
+            # if( missing( "text.col"  ) ){ text.col  <- graphics::par( "col" ) } 
             # if( missing( "text.font" ) ){ text.font <- NULL         } 
             
-            text( x = lRes$text$x[1], y = yy, 
+            graphics::text( x = lRes$text$x[1], y = yy, 
                 labels = legend, # cex = cex*par("cex"), 
                 col = text.col, pos = 4, offset = 0 ) # vfont = text.font, 
             
@@ -4224,14 +4253,14 @@ setColourRampScale.default <- function(
         
         #   Test that no values in x is outside the 'breaks'
         #   bounds
-        if( any( testHigh <- (na.omit( x ) > max( breaks )) ) ){
+        if( any( testHigh <- (stats::na.omit( x ) > max( breaks )) ) ){
             warning( sprintf( 
                 "Some values in x (%s) are higher than max(breaks). They may be displayed wrongly (or as NA)", 
                 sum( testHigh )
             ) ) 
         }   
         
-        if( any( testLow <- (na.omit( x ) < min( breaks )) ) ){
+        if( any( testLow <- (stats::na.omit( x ) < min( breaks )) ) ){
             warning( sprintf( 
                 "Some values in x (%s) are lower than min(breaks). They may be displayed wrongly (or as NA)", 
                 sum( testLow )
@@ -4442,11 +4471,12 @@ setColourRampScale.matrix <- function(
 #'
 #'@export 
 #'
+#'@importFrom utils installed.packages
 setColourRampScale.RasterLayer <- function( 
  x, 
  ...
 ){  
-    if( !"raster" %in% rownames( installed.packages() ) ){ 
+    if( !"raster" %in% rownames( utils::installed.packages() ) ){ 
         stop( "setColourRampScale.RasterLayer requires the package 'raster' to be installed" ) 
     }   
     
