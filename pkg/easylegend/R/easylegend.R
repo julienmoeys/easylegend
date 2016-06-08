@@ -257,8 +257,6 @@ setFactorGraphics.default <- function(
             # So if there is just one column it 
             # does not become a vector
         
-        isNA <- isNA[ o ] 
-        
         if( !is.null( colList ) ){
             colList <- colList[ o[ !isNA ] ]
         }   
@@ -274,6 +272,8 @@ setFactorGraphics.default <- function(
         if( !is.null( leg ) ){
             leg <- leg[ o[ !isNA ] ]
         }   
+        
+        isNA  <- is.na( convert[, "values" ] ) 
         
         rm( o )
     }   
@@ -338,7 +338,7 @@ setFactorGraphics.default <- function(
             testNa <- is.na( convert[, "col" ] ) & (!is.na( convert[, "values" ] ))
             
             if( any( testNa  ) ){ 
-                stop( "Some non-NA values in 'x' don't have a color in 'col'" ) 
+                stop( "Some non-NA values in 'x' don't have a colour in 'col'" ) 
             };  rm( testNa )
         }   
         
