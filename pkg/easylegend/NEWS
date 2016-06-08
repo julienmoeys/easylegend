@@ -1,6 +1,13 @@
 
     package easylegend
     
+VERSION 1.4.1
+
+    2016/06/08  Fix a bug in setFactorGraphics.default()
+        The values were ordered, but not the colours, fills 
+        or pch associated with the values, causing inconsistent 
+        legend compared to user specification.
+    
 VERSION 1.4.0
     
     2016/03/23  setColourRampScale(), setColourScale() and 
