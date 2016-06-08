@@ -1,5 +1,5 @@
-[![Linux Build Status (Travis CI)](https://travis-ci.org/julienmoeys/easylegend.svg?branch=master)](https://travis-ci.org/julienmoeys/easylegend) 
-[![Windows Build Status (AppVeyor)](https://ci.appveyor.com/api/projects/status/github/julienmoeys/easylegend?branch=master&svg=true)](https://ci.appveyor.com/project/julienmoeys/easylegend)
+Linux: [![Linux Build Status (Travis CI)](https://travis-ci.org/julienmoeys/easylegend.svg?branch=master)](https://travis-ci.org/julienmoeys/easylegend). 
+Windows: [![Windows Build Status (AppVeyor)](https://ci.appveyor.com/api/projects/status/github/julienmoeys/easylegend?branch=master&svg=true)](https://ci.appveyor.com/project/julienmoeys/easylegend)
 
 easylegend
 ==========
