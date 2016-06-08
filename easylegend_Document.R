@@ -1,7 +1,11 @@
 
 rm(list=ls(all=TRUE)) 
 pkgName <- "easylegend"
-pkgDir  <- sprintf( "D:/Users/julienm/Documents/_WORKS/_PROJECTS/r_packages/%s/pkg", pkgName )
+pkgDir  <- sprintf( 
+    "%s/%s/pkg", 
+    Sys.getenv("rPackagesDir"), 
+    pkgName )
+
 
 
 library( "roxygen2" )
