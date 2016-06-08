@@ -9,11 +9,7 @@ language: R
 cache:
   packages: yes
 
-sudo: required
-
-apt_packages:
- - unixodbc-dev
- - r-cran-rodbc
+sudo: false
 
 #   Subdirectories containing R packages to be compiled
 env:
