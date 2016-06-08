@@ -257,12 +257,11 @@ setFactorGraphics.default <- function(
             decreasing = decreasing, 
             na.last    = TRUE ) # "na.last = TRUE" is default
         
-        convert <- data.frame( 
+        convert <- rbind( 
             convert[ o, ,drop = FALSE ], 
-            convertNA, 
-            stringsAsFactors = FALSE ) 
-            # So if there is just one column it 
-            # does not become a vector
+            convertNA ) 
+            #   drop: So if there is just one column it 
+            #   does not become a vector
         
         if( !is.null( colList ) ){
             colList <- colList[ o ]
