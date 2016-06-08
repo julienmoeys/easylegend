@@ -1,10 +1,10 @@
 
-# +-------------------------------------------------------------+
-# | Language: R + roxygen2 inline documentation
-# | Package: easylegend 
-# | Author(s): Julien Moeys <Julien.Moeys@@slu.se> 
-# | License: AGPL3, Affero General Public License version 3 
-# +-------------------------------------------------------------+
+# +--------------------------------------------------------+
+# | Language: R + roxygen2 inline documentation            |
+# | Package:   easylegend                                  |
+# | Author(s): Julien Moeys <Julien.Moeys@@slu.se>         |
+# | License:   AGPL3, Affero General Public License v3     | 
+# +--------------------------------------------------------+
 
 # http://www.statmethods.net/advgraphs/parameters.html
 
@@ -61,7 +61,7 @@
 
 
 
-# setFactorGraphics =============================================
+# setFactorGraphics ========================================
 
 #' Prepare a graphics and legend (col, pch, lty) from categorical data.
 #'
@@ -240,24 +240,39 @@ setFactorGraphics.default <- function(
         };  rm(testPchList)
     }   
     
+    if( !is.null( leg ) ){
+        testLeg <- length( leg ) == (nrow( convert ) - sum( isNA ))
+        
+        if( !testLeg ){ 
+            stop( "'leg' should be the same length as 'unique(x)', NA excluded (or a logical value)" )
+        };  rm(testLeg)
+    }   
+    
     
     if( ord ){ 
-        o <- order( convert[, "values" ], decreasing = decreasing )
+        o <- order( convert[, "values" ], decreasing = decreasing, 
+            na.last = TRUE ) # "na.last = TRUE" is default
         
         convert <- convert[ o, ,drop = FALSE ] 
             # So if there is just one column it 
             # does not become a vector
         
+        isNA <- isNA[ o ] 
+        
         if( !is.null( colList ) ){
-            colList <- colList[ o ]
+            colList <- colList[ o[ !isNA ] ]
         }   
         
         if( !is.null( fillList ) ){
-            fillList <- fillList[ o ]
+            fillList <- fillList[ o[ !isNA ] ]
         }   
         
         if( !is.null( pchList ) ){
-            pchList <- pchList[ o ]
+            pchList <- pchList[ o[ !isNA ] ]
+        }   
+        
+        if( !is.null( leg ) ){
+            leg <- leg[ o[ !isNA ] ]
         }   
         
         rm( o )
