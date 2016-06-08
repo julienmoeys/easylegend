@@ -44,15 +44,15 @@ Here are a simple examples of what can be obtained with `easylegend`:
 
 ### Example 01
 
-![Image 01, Example, package easylegend](www/img/example01.png "Image 01, Example, package easylegend")
+[![Image 01, Example, package easylegend](www/img/example01.png "Image 01, Example, package easylegend")](www/example01.R)
 
-The source code for generating this example can be found [here](www/example01.R)
+_Click on the image to view the source code of this example_.
 
 ### Example 02
 
-![Image 02, Example, package easylegend](www/img/example02.png "Image 02, Example, package easylegend")
+[![Image 02, Example, package easylegend](www/img/example02.png "Image 02, Example, package easylegend")](www/example02.R)
 
-The source code for generating this example can be found [here](www/example02.R)
+_Click on the image to view the source code of this example_.
 
 ### Example 03
 
@@ -60,9 +60,9 @@ This example show how `easylegend` can be used with the package
 [raster](http://cran.r-project.org/web/packages/raster/index.html) 
 to generate custom legends for data that span across a log-scale. 
 
-![Image 03, Example, package easylegend](www/img/example03.png "Image 03, Example, package easylegend")
+[![Image 03, Example, package easylegend](www/img/example03.png "Image 03, Example, package easylegend")](www/example02.R)
 
-The source code for generating this example can be found [here](www/example03.R)
+_Click on the image to view the source code of this example_.
 
 Please notice that the package [rasterVis][] provides advanced 
 way to customise a raster-plot (but as far as I know not for custom 

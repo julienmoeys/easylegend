@@ -1,4 +1,6 @@
 
+setwd( wd <- sprintf( "%s/easylegend/www", Sys.getenv("rPackagesDir") ) ) 
+
 library( "raster" ) 
 library( "easylegend" )
 
@@ -6,10 +8,10 @@ library( "easylegend" )
 r <- raster(nrows=10, ncols=10)
 r <- setValues(r, log10( 1:ncell(r) ))  # NOTICE THE LOG SCALE
 
-qu <- quantile( x = values(r), probs = seq( 1, 0, length.out = 6 ) )
+qu <- quantile( x = values(r), probs = seq( 1, 0, length.out = 5 ) )
 
 #   'Calibrate' the legend (2)
-cs  <- setColorScale( 
+cs  <- setColourRampScale( 
     x      = r, 
     breaks = qu, 
     fill   = c( "darkred", "red", "orange", "lightgreen", "lightblue" ), 
@@ -30,7 +32,6 @@ png(
     #   Plot x y and g
     plot( 
         x      = r, 
-        y      = xyz[, "y" ], 
         breaks = cs$iBreaks, 
         col    = cs$iFill, 
         xlab   = "Longitude", 
@@ -39,6 +40,6 @@ png(
         legend = FALSE ) # Important
     
     plotAnywhere( cs$legend( x = "right", title = "Values:", bty = "n" ) )
-
+    
 dev.off() 
 

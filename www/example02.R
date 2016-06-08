@@ -1,6 +1,10 @@
 
+setwd( wd <- sprintf( "%s/easylegend/www", Sys.getenv("rPackagesDir") ) ) 
+
 # GENERATE DUMMY DATASET X-Y-Z OF CORRELATED VARIABLES + GROUPS
 # =============================================================
+
+set.seed( 20160608 )
 
 #  Base variable (x) and groups (g)
 n <- 200 

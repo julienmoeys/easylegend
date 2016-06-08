@@ -1,9 +1,10 @@
 
-setwd( "D:/Users/julienm/Documents/_WORKS/_PROJECTS/r_packages/easylegend/www" )
-
+setwd( wd <- sprintf( "%s/easylegend/www", Sys.getenv("rPackagesDir") ) ) 
 
 # GENERATE DUMMY DATASET X-Y-Z OF CORRELATED VARIABLES + GROUPS
 # =============================================================
+
+set.seed( 20160608 )
 
 #  Base variable (x) and groups (g)
 n <- 200 
@@ -43,7 +44,7 @@ fg <- setFactorGraphics( x = xyz[, "g" ], pch = 15:16 )
 fill <- hsv( h = 0.21, s = .8, v = seq( .8, .2, length.out = 5 ) )
 
 #   'Calibrate' the legend (2)
-cs  <- setColorScale( x = xyz[, "z" ], fill = fill, int = 4, 
+cs  <- setColourRampScale( x = xyz[, "z" ], fill = fill, int = 4, 
     nsmall = 1, digits = 1 ) 
 
 #   Generate the image-plot
@@ -74,5 +75,3 @@ png(
 dev.off() 
 
 rm( fg, cs, fill ) 
-
-
